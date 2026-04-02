@@ -681,15 +681,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_e2e"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "bevy_ecs"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4408,6 +4399,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "saddle-bevy-e2e"
+version = "0.1.0"
+source = "git+https://github.com/julien-blanchon/saddle-bevy-e2e#619e9cfa6a51f391e81520aafec2481c0e6923dd"
+dependencies = [
+ "bevy",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "saddle-camera-rts-camera"
 version = "0.1.0"
 dependencies = [
@@ -4483,8 +4484,8 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_brp_extras",
- "bevy_e2e",
  "bevy_enhanced_input",
+ "saddle-bevy-e2e",
  "saddle-camera-rts-camera",
  "saddle-camera-rts-camera-example-common",
 ]
