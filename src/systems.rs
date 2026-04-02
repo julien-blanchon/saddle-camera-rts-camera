@@ -182,24 +182,24 @@ pub(crate) fn apply_camera_input(
                         None
                     };
                 camera.target_yaw += yaw_delta;
-                if let Some(anchor_before) = anchor {
-                    if let Some(anchor_after) = predicted_cursor_anchor(
+                if let Some(anchor_before) = anchor
+                    && let Some(anchor_after) = predicted_cursor_anchor(
                         camera_component,
                         input.cursor_position,
                         &camera,
                         settings,
                         &mut ray_cast,
                         &ground,
-                    ) {
-                        let delta = anchor_before - anchor_after;
-                        apply_focus_delta(
-                            &mut camera,
-                            settings,
-                            follow.as_deref_mut(),
-                            Vec2::new(delta.x, delta.z),
-                        );
-                        cursor_anchor = Some(anchor_before);
-                    }
+                    )
+                {
+                    let delta = anchor_before - anchor_after;
+                    apply_focus_delta(
+                        &mut camera,
+                        settings,
+                        follow.as_deref_mut(),
+                        Vec2::new(delta.x, delta.z),
+                    );
+                    cursor_anchor = Some(anchor_before);
                 }
             }
         }
@@ -217,24 +217,24 @@ pub(crate) fn apply_camera_input(
                 &settings.distance,
             );
 
-            if let Some(anchor_before) = anchor {
-                if let Some(anchor_after) = predicted_cursor_anchor(
+            if let Some(anchor_before) = anchor
+                && let Some(anchor_after) = predicted_cursor_anchor(
                     camera_component,
                     input.cursor_position,
                     &camera,
                     settings,
                     &mut ray_cast,
                     &ground,
-                ) {
-                    let delta = anchor_before - anchor_after;
-                    apply_focus_delta(
-                        &mut camera,
-                        settings,
-                        follow.as_deref_mut(),
-                        Vec2::new(delta.x, delta.z),
-                    );
-                    cursor_anchor = Some(anchor_before);
-                }
+                )
+            {
+                let delta = anchor_before - anchor_after;
+                apply_focus_delta(
+                    &mut camera,
+                    settings,
+                    follow.as_deref_mut(),
+                    Vec2::new(delta.x, delta.z),
+                );
+                cursor_anchor = Some(anchor_before);
             }
         }
 
@@ -313,10 +313,10 @@ pub(crate) fn apply_bounds(
             let delta = clamped - camera.target_focus;
             camera.target_focus = clamped;
 
-            if let Some(mut follow) = follow {
-                if follow.enabled && settings.controls.follow {
-                    follow.offset += delta;
-                }
+            if let Some(mut follow) = follow
+                && follow.enabled && settings.controls.follow
+            {
+                follow.offset += delta;
             }
         }
     }
@@ -519,10 +519,10 @@ fn apply_focus_delta(
     let delta = Vec3::new(delta_xz.x, 0.0, delta_xz.y);
     camera.target_focus += delta;
 
-    if let Some(follow) = follow {
-        if follow.enabled && settings.controls.follow {
-            follow.offset += delta;
-        }
+    if let Some(follow) = follow
+        && follow.enabled && settings.controls.follow
+    {
+        follow.offset += delta;
     }
 }
 
