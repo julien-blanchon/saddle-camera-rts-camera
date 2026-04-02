@@ -314,7 +314,8 @@ pub(crate) fn apply_bounds(
             camera.target_focus = clamped;
 
             if let Some(mut follow) = follow
-                && follow.enabled && settings.controls.follow
+                && follow.enabled
+                && settings.controls.follow
             {
                 follow.offset += delta;
             }
@@ -520,7 +521,8 @@ fn apply_focus_delta(
     camera.target_focus += delta;
 
     if let Some(follow) = follow
-        && follow.enabled && settings.controls.follow
+        && follow.enabled
+        && settings.controls.follow
     {
         follow.offset += delta;
     }
