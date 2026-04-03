@@ -10,6 +10,7 @@ use crate::config::RtsCameraSettings;
     RtsCameraSettings,
     RtsCameraRuntime,
     RtsCameraInput,
+    RtsCameraBookmarks,
     RtsCameraInternalState
 )]
 pub struct RtsCamera {
@@ -90,6 +91,49 @@ pub struct RtsCameraInput {
     pub drag_rotate_active: bool,
     pub cursor_position: Option<Vec2>,
     pub zoom_to_cursor: bool,
+    pub fly_to_focus: Option<Vec3>,
+    pub fly_to_yaw: Option<f32>,
+    pub fly_to_distance: Option<f32>,
+    pub fly_to_snap: bool,
+    pub set_bookmark_slot: Option<usize>,
+    pub recall_bookmark_slot: Option<usize>,
+    pub recall_bookmark_snap: bool,
+}
+
+#[derive(Clone, Copy, Debug, Reflect, PartialEq)]
+pub struct RtsCameraBookmark {
+    pub focus: Vec3,
+    pub yaw: f32,
+    pub distance: f32,
+}
+
+impl RtsCameraBookmark {
+    pub fn from_runtime(runtime: &RtsCameraRuntime) -> Self {
+        Self {
+            focus: runtime.focus,
+            yaw: runtime.yaw,
+            distance: runtime.distance,
+        }
+    }
+}
+
+#[derive(Component, Clone, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct RtsCameraBookmarks {
+    pub slots: Vec<Option<RtsCameraBookmark>>,
+}
+
+impl RtsCameraBookmarks {
+    pub fn set(&mut self, slot: usize, bookmark: RtsCameraBookmark) {
+        if self.slots.len() <= slot {
+            self.slots.resize(slot + 1, None);
+        }
+        self.slots[slot] = Some(bookmark);
+    }
+
+    pub fn get(&self, slot: usize) -> Option<RtsCameraBookmark> {
+        self.slots.get(slot).copied().flatten()
+    }
 }
 
 #[derive(Component, Clone, Debug, Reflect)]

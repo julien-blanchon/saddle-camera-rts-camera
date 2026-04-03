@@ -6,9 +6,10 @@ use bevy::{
 };
 
 use crate::{
-    RtsCamera, RtsCameraBoundsMode, RtsCameraDebug, RtsCameraFollow, RtsCameraGround,
-    RtsCameraInput, RtsCameraInternalState, RtsCameraRotationPivotMode, RtsCameraRuntime,
-    RtsCameraSettings, RtsCameraZoomAnchorMode,
+    RtsCamera, RtsCameraBookmark, RtsCameraBookmarkRecalled, RtsCameraBookmarkStored,
+    RtsCameraBookmarks, RtsCameraBoundsMode, RtsCameraDebug, RtsCameraFlyToApplied,
+    RtsCameraFollow, RtsCameraGround, RtsCameraInput, RtsCameraInternalState,
+    RtsCameraRotationPivotMode, RtsCameraRuntime, RtsCameraSettings, RtsCameraZoomAnchorMode,
     math::{
         apply_bounds_delta, camera_pitch_for_distance, camera_transform_from_state, clamp_distance,
         clamp_focus_to_bounds, pan_vector_from_yaw, resolve_ground_height_target, smooth_angle,
@@ -63,6 +64,66 @@ pub(crate) fn sync_follow_targets(
         camera.target_focus = target.translation() + follow.offset;
         if follow.snap {
             camera.snap = true;
+        }
+    }
+}
+
+pub(crate) fn apply_programmatic_commands(
+    mut cameras: Query<
+        (
+            Entity,
+            &mut RtsCamera,
+            &RtsCameraRuntime,
+            &mut RtsCameraBookmarks,
+            &mut RtsCameraInput,
+        ),
+        With<RtsCamera>,
+    >,
+    mut bookmark_stored: MessageWriter<RtsCameraBookmarkStored>,
+    mut bookmark_recalled: MessageWriter<RtsCameraBookmarkRecalled>,
+    mut fly_to_applied: MessageWriter<RtsCameraFlyToApplied>,
+) {
+    for (entity, mut camera, runtime, mut bookmarks, input) in &mut cameras {
+        if let Some(slot) = input.set_bookmark_slot {
+            let bookmark = RtsCameraBookmark::from_runtime(runtime);
+            bookmarks.set(slot, bookmark);
+            bookmark_stored.write(RtsCameraBookmarkStored {
+                camera: entity,
+                slot,
+                bookmark,
+            });
+        }
+
+        if let Some(slot) = input.recall_bookmark_slot
+            && let Some(bookmark) = bookmarks.get(slot)
+        {
+            camera.target_focus = bookmark.focus;
+            camera.target_yaw = bookmark.yaw;
+            camera.target_distance = bookmark.distance;
+            camera.snap |= input.recall_bookmark_snap;
+            bookmark_recalled.write(RtsCameraBookmarkRecalled {
+                camera: entity,
+                slot,
+                bookmark,
+            });
+        }
+
+        if let Some(focus) = input.fly_to_focus {
+            camera.target_focus = focus;
+            if let Some(yaw) = input.fly_to_yaw {
+                camera.target_yaw = yaw;
+            }
+            if let Some(distance) = input.fly_to_distance {
+                camera.target_distance = distance;
+            }
+            camera.snap |= input.fly_to_snap;
+            fly_to_applied.write(RtsCameraFlyToApplied {
+                camera: entity,
+                focus: camera.target_focus,
+                yaw: camera.target_yaw,
+                distance: camera.target_distance,
+                snap: input.fly_to_snap,
+            });
         }
     }
 }

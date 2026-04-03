@@ -138,6 +138,27 @@ Useful helpers:
 - `RtsCamera::looking_at(focus, eye)`
 - `RtsCamera::snap_to(focus, yaw, distance)`
 
+## `RtsCameraBookmark`
+
+| Field | Type | Effect |
+| --- | --- | --- |
+| `focus` | `Vec3` | Saved world focus point |
+| `yaw` | `f32` | Saved yaw in radians |
+| `distance` | `f32` | Saved camera distance |
+
+`RtsCameraBookmark::from_runtime(&RtsCameraRuntime)` captures the currently rendered view instead of the unsmoothed target state.
+
+## `RtsCameraBookmarks`
+
+| Field | Type | Effect |
+| --- | --- | --- |
+| `slots` | `Vec<Option<RtsCameraBookmark>>` | Sparse bookmark table stored on each camera |
+
+Helpers:
+
+- `set(slot, bookmark)` grows the slot table as needed
+- `get(slot)` returns the saved bookmark when present
+
 ## `RtsCameraFollow`
 
 | Field | Type | Default | Effect |
@@ -164,6 +185,13 @@ This is the generic intent inbox for external controllers.
 | `drag_rotate_active` | `bool` | Enables drag rotation logic |
 | `cursor_position` | `Option<Vec2>` | Current logical cursor position for anchor resolution |
 | `zoom_to_cursor` | `bool` | Per-frame override that forces cursor-preserving zoom even if `anchors.zoom_anchor` is `Focus` |
+| `fly_to_focus` | `Option<Vec3>` | One-shot programmatic fly-to focus target |
+| `fly_to_yaw` | `Option<f32>` | Optional one-shot yaw override for the fly-to command |
+| `fly_to_distance` | `Option<f32>` | Optional one-shot distance override for the fly-to command |
+| `fly_to_snap` | `bool` | Requests an immediate snap for the current fly-to command instead of smoothing |
+| `set_bookmark_slot` | `Option<usize>` | Captures the rendered camera view into the requested bookmark slot |
+| `recall_bookmark_slot` | `Option<usize>` | Restores a previously saved bookmark into `RtsCamera` target state |
+| `recall_bookmark_snap` | `bool` | Requests an immediate snap when recalling a bookmark |
 
 The runtime clears `RtsCameraInput` at the end of each frame, so external writers should repopulate it every frame.
 

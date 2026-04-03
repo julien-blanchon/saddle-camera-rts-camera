@@ -24,6 +24,9 @@ pub struct LabCameraEntity(pub Entity);
 #[derive(Resource, Clone, Copy)]
 pub struct LabTargetEntity(pub Entity);
 
+#[derive(Resource, Clone, Copy, Default)]
+pub struct LabTargetOverride(pub Option<Vec3>);
+
 fn main() {
     let mut app = App::new();
     common::apply_example_defaults(&mut app);
@@ -40,6 +43,7 @@ fn main() {
         common::ExampleRtsCameraControlsPlugin,
         RemotePlugin::default(),
     ));
+    common::install_pane(&mut app);
     #[cfg(feature = "brp")]
     app.add_plugins(BrpExtrasPlugin::with_http_plugin(
         RemoteHttpPlugin::default(),
@@ -96,25 +100,31 @@ fn setup(
         }),
         ..default()
     };
+    let camera = RtsCamera::looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::new(-18.0, 18.0, 18.0));
 
-    let camera = common::spawn_rts_camera(
+    let camera_entity = common::spawn_rts_camera(
         &mut commands,
         "Lab RTS Camera",
-        RtsCamera::looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::new(-18.0, 18.0, 18.0)),
-        settings,
+        camera.clone(),
+        settings.clone(),
         None,
         true,
     );
-    common::attach_enhanced_input(&mut commands, camera);
-    commands.entity(camera).insert(RtsCameraFollow {
+    common::attach_enhanced_input(&mut commands, camera_entity);
+    commands.entity(camera_entity).insert(RtsCameraFollow {
         target,
         offset: Vec3::ZERO,
         enabled: false,
         snap: false,
     });
 
-    commands.insert_resource(LabCameraEntity(camera));
+    commands.insert_resource(LabCameraEntity(camera_entity));
     commands.insert_resource(LabTargetEntity(target));
+    commands.insert_resource(LabTargetOverride::default());
+    common::queue_example_pane(
+        &mut commands,
+        common::ExampleRtsPane::from_setup(&camera, &settings, false, true),
+    );
 
     commands.spawn((
         Name::new("Lab Overlay"),
@@ -137,10 +147,19 @@ fn setup(
     ));
 }
 
-fn animate_target(time: Res<Time>, mut targets: Query<&mut Transform, With<LabFollowTarget>>) {
+fn animate_target(
+    time: Res<Time>,
+    target_override: Option<Res<LabTargetOverride>>,
+    mut targets: Query<&mut Transform, With<LabFollowTarget>>,
+) {
     let Ok(mut transform) = targets.single_mut() else {
         return;
     };
+
+    if let Some(target_override) = target_override.and_then(|target_override| target_override.0) {
+        transform.translation = target_override;
+        return;
+    }
 
     let t = time.elapsed_secs() * 0.55;
     transform.translation.x = 10.0 * t.cos();

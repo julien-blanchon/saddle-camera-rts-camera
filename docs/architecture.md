@@ -36,6 +36,8 @@ The runtime uses three layers of state instead of mutating `Transform` directly 
 
 That separation keeps programmatic jumps, follow-target motion, smoothing, bounds, and cursor-anchor compensation on one consistent path.
 
+`RtsCameraBookmarks` lives on the same entity and stores optional saved views. Bookmark recall writes back into `RtsCamera`, so saved views travel through the same bounds, smoothing, and transform-sync pipeline as manual control.
+
 ## Input Flow
 
 The runtime accepts input through `RtsCameraInput`.
@@ -53,6 +55,13 @@ External systems write:
 - `drag_rotate_active`
 - `cursor_position`
 - `zoom_to_cursor`
+- `fly_to_focus`
+- `fly_to_yaw`
+- `fly_to_distance`
+- `fly_to_snap`
+- `set_bookmark_slot`
+- `recall_bookmark_slot`
+- `recall_bookmark_snap`
 
 The examples and crate-local lab show a `bevy_enhanced_input` bridge that evaluates its context in `Update`, then writes this component after `EnhancedInputSystems::Apply` and before `RtsCameraSystems::ResolveTarget`.
 
@@ -73,10 +82,13 @@ This step exists only for the raw fallback path. If no camera carries `RtsCamera
 ### `ResolveTarget`
 
 - `initialize_added_cameras`
+- `apply_programmatic_commands`
 - `sync_follow_targets`
 - `apply_camera_input`
 
 `initialize_added_cameras` seeds runtime state from the authored target state so new cameras do not jump on their first frame.
+
+`apply_programmatic_commands` resolves one-shot fly-to requests and bookmark save/recall before follow and manual input are processed.
 
 `sync_follow_targets` updates `target_focus` from the tracked entity plus `RtsCameraFollow.offset`.
 

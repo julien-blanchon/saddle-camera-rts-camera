@@ -2,6 +2,7 @@
 members = [
     "common",
     "basic",
+    "bookmarks",
     "terrain_follow",
     "cursor_zoom",
     "bounds",

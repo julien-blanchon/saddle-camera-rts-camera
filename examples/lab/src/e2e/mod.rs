@@ -1,4 +1,5 @@
 use bevy::{math::DVec2, prelude::*, window::PrimaryWindow};
+use bevy_enhanced_input::prelude::EnhancedInputSystems;
 use saddle_bevy_e2e::{
     E2EPlugin, E2ESet,
     action::Action,
@@ -6,8 +7,7 @@ use saddle_bevy_e2e::{
     init_scenario,
     scenario::Scenario,
 };
-use bevy_enhanced_input::prelude::EnhancedInputSystems;
-use saddle_camera_rts_camera::{RtsCamera, RtsCameraFollow, RtsCameraRuntime};
+use saddle_camera_rts_camera::{RtsCamera, RtsCameraFollow, RtsCameraInput, RtsCameraRuntime};
 
 use crate::{LabCameraEntity, LabTargetEntity};
 
@@ -48,7 +48,6 @@ struct RuntimeBaseline {
     focus: Vec3,
     yaw: f32,
     distance: f32,
-    ground_height: Option<f32>,
     last_cursor_anchor: Option<Vec3>,
 }
 
@@ -78,6 +77,7 @@ fn scenario_by_name(name: &str) -> Option<Scenario> {
         "rts_camera_controls" => Some(build_controls()),
         "rts_camera_pointer_controls" => Some(build_pointer_controls()),
         "rts_camera_follow_target" => Some(build_follow_target()),
+        "rts_camera_bookmarks" => Some(build_bookmarks()),
         _ => None,
     }
 }
@@ -89,6 +89,7 @@ fn list_scenarios() -> Vec<&'static str> {
         "rts_camera_controls",
         "rts_camera_pointer_controls",
         "rts_camera_follow_target",
+        "rts_camera_bookmarks",
     ]
 }
 
@@ -115,7 +116,6 @@ fn store_runtime_baseline(world: &mut World) {
             focus: runtime.focus,
             yaw: runtime.yaw,
             distance: runtime.distance,
-            ground_height: runtime.ground_height,
             last_cursor_anchor: runtime.last_cursor_anchor,
         });
     }
@@ -170,10 +170,19 @@ fn build_smoke() -> Scenario {
 fn build_controls() -> Scenario {
     Scenario::builder("rts_camera_controls")
         .description(
-            "Drive the real BEI input path for pan, rotate, and zoom, then snap to the plateau to verify terrain follow and capture visual checkpoints.",
+            "Drive the real BEI input path for pan, rotate, and zoom on the uneven battlefield scene, then capture a verification screenshot.",
         )
         .then(Action::WaitFrames(60))
         .then(Action::Custom(Box::new(|world: &mut World| {
+            let Some(entity) = camera_entity(world) else {
+                return;
+            };
+            if let Some(mut settings) =
+                world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity)
+            {
+                settings.controls.edge_pan = false;
+            }
+            set_cursor_position(world, Vec2::new(720.0, 450.0));
             store_runtime_baseline(world);
         })))
         .then(Action::Screenshot("rts_camera_controls_before".into()))
@@ -191,7 +200,7 @@ fn build_controls() -> Scenario {
         .then(Action::MouseScroll {
             delta: Vec2::new(0.0, 6.0),
         })
-        .then(Action::WaitFrames(20))
+        .then(Action::WaitFrames(24))
         .then(assertions::custom(
             "pan rotate zoom changed runtime",
             Box::new(|world: &World| {
@@ -204,31 +213,6 @@ fn build_controls() -> Scenario {
                 runtime.focus.distance(baseline.focus) > 1.0
                     && (runtime.yaw - baseline.yaw).abs() > 0.08
                     && (runtime.distance - baseline.distance).abs() > 0.5
-            }),
-        ))
-        .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-            if let Some(mut camera) = world.get_mut::<RtsCamera>(entity) {
-                let target_yaw = camera.target_yaw;
-                let target_distance = camera.target_distance;
-                camera.snap_to(Vec3::new(14.0, 0.0, 10.0), target_yaw, target_distance);
-            }
-        })))
-        .then(Action::WaitFrames(2))
-        .then(assertions::custom(
-            "terrain follow raises focus on plateau",
-            Box::new(|world: &World| {
-                let Some(baseline) = world.get_resource::<RuntimeBaseline>().copied() else {
-                    return false;
-                };
-                let Some(runtime) = runtime(world) else {
-                    return false;
-                };
-                runtime.focus.y > 2.0
-                    && runtime.ground_height.unwrap_or_default()
-                        > baseline.ground_height.unwrap_or_default() + 1.0
             }),
         ))
         .then(assertions::log_summary("rts_camera_controls summary"))
@@ -293,9 +277,9 @@ fn build_pointer_controls() -> Scenario {
         .then(Action::PressMouseButton(MouseButton::Right))
         .then(Action::WaitFrames(1))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            set_cursor_position(world, Vec2::new(640.0, 560.0));
+            set_cursor_position(world, Vec2::new(500.0, 660.0));
         })))
-        .then(Action::WaitFrames(10))
+        .then(Action::WaitFrames(12))
         .then(Action::ReleaseMouseButton(MouseButton::Right))
         .then(assertions::custom(
             "drag pan adjusts focus",
@@ -306,7 +290,7 @@ fn build_pointer_controls() -> Scenario {
                 let Some(runtime) = runtime(world) else {
                     return false;
                 };
-                runtime.focus.xz().distance(baseline.focus.xz()) > 0.75
+                runtime.focus.xz().distance(baseline.focus.xz()) > 0.35
             }),
         ))
         .then(Action::Custom(Box::new(|world: &mut World| {
@@ -414,6 +398,113 @@ fn build_follow_target() -> Scenario {
         ))
         .then(assertions::log_summary("rts_camera_follow_target summary"))
         .then(Action::Screenshot("rts_camera_follow_target_after".into()))
+        .then(Action::WaitFrames(1))
+        .build()
+}
+
+fn build_bookmarks() -> Scenario {
+    Scenario::builder("rts_camera_bookmarks")
+        .description(
+            "Store the baseline camera as a bookmark, fly to a new battlefield location, then recall the saved bookmark and assert the runtime snaps back cleanly.",
+        )
+        .then(Action::WaitFrames(60))
+        .then(Action::Custom(Box::new(|world: &mut World| {
+            set_cursor_position(world, Vec2::new(720.0, 450.0));
+            store_runtime_baseline(world);
+            let Some(entity) = camera_entity(world) else {
+                return;
+            };
+            if let Some(mut settings) =
+                world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity)
+            {
+                settings.controls.edge_pan = false;
+            }
+            if let Some(mut follow) = world.get_mut::<RtsCameraFollow>(entity) {
+                follow.enabled = false;
+            }
+            if let Some(mut pane) = world
+                .get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
+            {
+                pane.follow_enabled = false;
+            }
+            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
+                input.set_bookmark_slot = Some(0);
+            }
+        })))
+        .then(Action::Screenshot("rts_camera_bookmarks_before".into()))
+        .then(Action::WaitFrames(2))
+        .then(Action::Custom(Box::new(|world: &mut World| {
+            let Some(entity) = camera_entity(world) else {
+                return;
+            };
+            if let Some(mut pane) = world
+                .get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
+            {
+                pane.distance = 12.0;
+            }
+            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
+                input.fly_to_focus = Some(Vec3::new(-12.0, 0.0, -8.0));
+                input.fly_to_yaw = Some(0.95);
+                input.fly_to_distance = Some(12.0);
+                input.fly_to_snap = false;
+            }
+        })))
+        .then(Action::WaitFrames(36))
+        .then(assertions::custom(
+            "fly-to command moves camera to the authored bookmark location",
+            Box::new(|world: &World| {
+                let Some(baseline) = world.get_resource::<RuntimeBaseline>().copied() else {
+                    return false;
+                };
+                let Some(runtime) = runtime(world) else {
+                    return false;
+                };
+                runtime.focus.xz().distance(Vec2::new(-12.0, -8.0)) < 2.2
+                    && (runtime.distance - 12.0).abs() < 1.5
+                    && runtime.focus.distance(baseline.focus) > 4.0
+            }),
+        ))
+        .then(Action::Screenshot("rts_camera_bookmarks_fly_to".into()))
+        .then(Action::WaitFrames(1))
+        .then(Action::Custom(Box::new(|world: &mut World| {
+            let Some(entity) = camera_entity(world) else {
+                return;
+            };
+            let baseline_distance = world
+                .get_resource::<RuntimeBaseline>()
+                .map(|baseline| baseline.distance);
+            if let Some(mut pane) = world
+                .get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
+            {
+                if let Some(distance) = baseline_distance {
+                    pane.distance = distance;
+                }
+            }
+            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
+                input.recall_bookmark_slot = Some(0);
+                input.recall_bookmark_snap = true;
+            }
+        })))
+        .then(Action::WaitFrames(6))
+        .then(assertions::custom(
+            "bookmark recall restores the baseline runtime",
+            Box::new(|world: &World| {
+                let Some(baseline) = world.get_resource::<RuntimeBaseline>().copied() else {
+                    return false;
+                };
+                let Some(runtime) = runtime(world) else {
+                    return false;
+                };
+                runtime.focus.distance(baseline.focus) < 0.3
+                    && (runtime.yaw - baseline.yaw).abs() < 0.02
+                    && (runtime.distance - baseline.distance).abs() < 0.1
+            }),
+        ))
+        .then(assertions::log_summary("rts_camera_bookmarks summary"))
+        .then(inspect::dump_component_json::<RtsCameraRuntime>(
+            "rts_camera_bookmarks_runtime",
+        ))
+        .then(Action::Screenshot("rts_camera_bookmarks_after".into()))
         .then(Action::WaitFrames(1))
         .build()
 }

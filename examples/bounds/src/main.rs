@@ -20,6 +20,7 @@ fn main() {
         }),
         RtsCameraPlugin::default(),
     ));
+    common::install_pane(&mut app);
     app.add_systems(Startup, setup);
     app.run();
 }
@@ -48,13 +49,18 @@ fn setup(
         }),
         ..default()
     };
+    let camera = RtsCamera::looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::new(-14.0, 16.0, 14.0));
 
     common::spawn_rts_camera(
         &mut commands,
         "Bounds Camera",
-        RtsCamera::looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::new(-14.0, 16.0, 14.0)),
-        settings,
+        camera.clone(),
+        settings.clone(),
         Some(RtsCameraFallbackControls::default()),
         true,
+    );
+    common::queue_example_pane(
+        &mut commands,
+        common::ExampleRtsPane::from_setup(&camera, &settings, true, true),
     );
 }

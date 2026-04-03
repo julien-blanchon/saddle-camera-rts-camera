@@ -20,6 +20,7 @@ fn main() {
         RtsCameraPlugin::default(),
         common::ExampleRtsCameraControlsPlugin,
     ));
+    common::install_pane(&mut app);
     app.add_systems(Startup, setup);
     app.run();
 }
@@ -46,14 +47,19 @@ fn setup(
         },
         ..default()
     };
+    let camera = RtsCamera::looking_at(common::DEFAULT_FOCUS, common::DEFAULT_EYE);
 
-    let camera = common::spawn_rts_camera(
+    let camera_entity = common::spawn_rts_camera(
         &mut commands,
         "Enhanced Input Camera",
-        RtsCamera::looking_at(common::DEFAULT_FOCUS, common::DEFAULT_EYE),
-        settings,
+        camera.clone(),
+        settings.clone(),
         None,
         true,
     );
-    common::attach_enhanced_input(&mut commands, camera);
+    common::attach_enhanced_input(&mut commands, camera_entity);
+    common::queue_example_pane(
+        &mut commands,
+        common::ExampleRtsPane::from_setup(&camera, &settings, true, true),
+    );
 }

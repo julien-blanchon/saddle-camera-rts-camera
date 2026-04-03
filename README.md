@@ -13,6 +13,7 @@ Target-state camera model with smoothing, terrain probing, bounds, cursor-aware 
 - Zoom-anchor and rotation-pivot policies driven by focus or cursor-ground hits
 - Bounded camera travel with hard or soft map limits
 - Follow-target views for alerts, spectating, and points of interest
+- Programmatic fly-to commands and bookmark save/recall for RTS workflows
 
 ## Quick Start
 
@@ -58,6 +59,8 @@ fn setup(
 
 The runtime is driven through the `RtsCamera` target state plus the `RtsCameraInput` inbox. Consumers can mutate those public components directly or feed them from their own input layer.
 
+That same input surface also handles one-shot fly-to commands plus bookmark save/recall, so minimaps, alerts, and editor tooling can reuse the same smoothing path as manual pan/zoom/rotate controls.
+
 `RtsCameraInput` keeps general pan intent separate from edge-pan intent so `RtsCameraControlFlags::pan` and `RtsCameraControlFlags::edge_pan` can be toggled independently at runtime.
 
 For always-on tools and examples, `RtsCameraPlugin::always_on(Update)` is the convenience constructor.
@@ -70,6 +73,7 @@ For always-on tools and examples, `RtsCameraPlugin::always_on(Update)` is the co
 | `RtsCameraSystems` | Public ordering hooks: `ReadInput`, `ResolveTarget`, `FollowGround`, `ApplyBounds`, `AdvanceRuntime`, `SyncTransform`, `Debug` |
 | `RtsCamera` | Main controller component containing desired focus, yaw, distance, and snap requests |
 | `RtsCameraRuntime` | Smoothed runtime state: focus, yaw, pitch, distance, ground height, last ground hit, last cursor anchor |
+| `RtsCameraBookmark` / `RtsCameraBookmarks` | Captured camera views for RTS-style bookmark save/recall |
 | `RtsCameraSettings` | Top-level tuning surface for distance, pitch, motion, bounds, terrain follow, anchors, and control flags |
 | `RtsCameraBounds` / `RtsCameraBoundsMode` | Hard or soft travel limits for focus XZ |
 | `RtsCameraGround` | Marker for meshes that participate in terrain-follow and cursor-ground ray casts |
@@ -78,6 +82,7 @@ For always-on tools and examples, `RtsCameraPlugin::always_on(Update)` is the co
 | `RtsCameraInputTarget` | Opt-in marker for which camera should consume shared pointer input |
 | `RtsCameraFallbackControls` | Explicit raw-input fallback path for examples, prototypes, or tool scenes |
 | `RtsCameraDebug` | Enables focus, anchor, ground-hit, and bounds gizmos |
+| Messages | `RtsCameraBookmarkStored`, `RtsCameraBookmarkRecalled`, `RtsCameraFlyToApplied` |
 
 ## Input Model
 
@@ -109,11 +114,14 @@ cargo run -p saddle-camera-rts-camera-example-basic
 | Example | Purpose |
 | --- | --- |
 | `basic` | Minimal fallback-controller setup on flat terrain |
+| `bookmarks` | Battlefield command posts with RTS-style bookmark recall and overwrite |
 | `terrain_follow` | Uneven ground with focus-height gizmos |
 | `cursor_zoom` | Focus zoom by default, Alt for cursor-preserving zoom |
 | `bounds` | Soft bounds behavior with visible clamp loop |
 | `follow_target` | Moving follow target with manual offset adjustment |
 | `enhanced_input` | `bevy_enhanced_input` bridge writing into `RtsCameraInput` |
+
+Every example now ships with a live `saddle-pane` control surface so distance limits, cursor zoom policy, pan speeds, and debug gizmos can be tuned at runtime.
 
 ## Known Limitations
 

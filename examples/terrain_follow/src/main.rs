@@ -1,7 +1,9 @@
 use saddle_camera_rts_camera_example_common as common;
 
 use bevy::prelude::*;
-use saddle_camera_rts_camera::{RtsCamera, RtsCameraFallbackControls, RtsCameraPlugin, RtsCameraSettings};
+use saddle_camera_rts_camera::{
+    RtsCamera, RtsCameraFallbackControls, RtsCameraPlugin, RtsCameraSettings,
+};
 
 fn main() {
     let mut app = App::new();
@@ -17,6 +19,7 @@ fn main() {
         }),
         RtsCameraPlugin::default(),
     ));
+    common::install_pane(&mut app);
     app.add_systems(Startup, setup);
     app.run();
 }
@@ -26,6 +29,9 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let camera = RtsCamera::looking_at(Vec3::new(8.0, 0.0, -8.0), Vec3::new(-18.0, 20.0, 18.0));
+    let settings = RtsCameraSettings::default();
+
     common::spawn_reference_world(
         &mut commands,
         &mut meshes,
@@ -39,9 +45,13 @@ fn setup(
     common::spawn_rts_camera(
         &mut commands,
         "Terrain Follow Camera",
-        RtsCamera::looking_at(Vec3::new(8.0, 0.0, -8.0), Vec3::new(-18.0, 20.0, 18.0)),
-        RtsCameraSettings::default(),
+        camera.clone(),
+        settings.clone(),
         Some(RtsCameraFallbackControls::default()),
         true,
+    );
+    common::queue_example_pane(
+        &mut commands,
+        common::ExampleRtsPane::from_setup(&camera, &settings, true, true),
     );
 }

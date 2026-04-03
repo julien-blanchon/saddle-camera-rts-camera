@@ -23,6 +23,7 @@ fn main() {
         }),
         RtsCameraPlugin::default(),
     ));
+    common::install_pane(&mut app);
     app.add_systems(Startup, setup);
     app.add_systems(
         Update,
@@ -60,21 +61,27 @@ fn setup(
         ))
         .id();
 
-    let camera = common::spawn_rts_camera(
+    let camera = RtsCamera::looking_at(Vec3::new(4.0, 0.0, 0.0), Vec3::new(-16.0, 16.0, 16.0));
+    let settings = RtsCameraSettings::default();
+    let camera_entity = common::spawn_rts_camera(
         &mut commands,
         "Follow Camera",
-        RtsCamera::looking_at(Vec3::new(4.0, 0.0, 0.0), Vec3::new(-16.0, 16.0, 16.0)),
-        RtsCameraSettings::default(),
+        camera.clone(),
+        settings.clone(),
         Some(RtsCameraFallbackControls::default()),
         true,
     );
 
-    commands.entity(camera).insert(RtsCameraFollow {
+    commands.entity(camera_entity).insert(RtsCameraFollow {
         target,
         offset: Vec3::ZERO,
         enabled: true,
         snap: false,
     });
+    common::queue_example_pane(
+        &mut commands,
+        common::ExampleRtsPane::from_setup(&camera, &settings, true, true),
+    );
 }
 
 fn animate_target(time: Res<Time>, mut targets: Query<&mut Transform, With<DemoFollowTarget>>) {

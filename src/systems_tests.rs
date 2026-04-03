@@ -1,8 +1,8 @@
 use bevy::{prelude::*, time::TimeUpdateStrategy};
 
 use crate::{
-    RtsCamera, RtsCameraBounds, RtsCameraBoundsMode, RtsCameraPlugin, RtsCameraRuntime,
-    RtsCameraSettings,
+    RtsCamera, RtsCameraBookmarks, RtsCameraBounds, RtsCameraBoundsMode, RtsCameraPlugin,
+    RtsCameraRuntime, RtsCameraSettings,
 };
 
 fn spawn_camera(app: &mut App, settings: RtsCameraSettings) -> Entity {
@@ -157,4 +157,99 @@ fn edge_pan_still_moves_when_general_pan_is_disabled() {
         .target_focus;
 
     assert!(after.xz().distance(before.xz()) > 0.1);
+}
+
+#[test]
+fn bookmarks_store_current_runtime_and_restore_target_state() {
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins)
+        .add_plugins(RtsCameraPlugin::always_on(Update));
+    init_test_assets(&mut app);
+
+    let mut settings = RtsCameraSettings::default();
+    settings.ground.enabled = false;
+    let entity = spawn_camera(&mut app, settings);
+    start(&mut app);
+
+    {
+        let mut input = app
+            .world_mut()
+            .get_mut::<crate::RtsCameraInput>(entity)
+            .expect("input should exist");
+        input.set_bookmark_slot = Some(2);
+    }
+    app.update();
+
+    {
+        let mut camera = app
+            .world_mut()
+            .get_mut::<RtsCamera>(entity)
+            .expect("camera should exist");
+        camera.target_focus = Vec3::new(14.0, 0.0, -9.0);
+        camera.target_yaw = 1.8;
+        camera.target_distance = 30.0;
+    }
+    {
+        let mut input = app
+            .world_mut()
+            .get_mut::<crate::RtsCameraInput>(entity)
+            .expect("input should exist");
+        input.recall_bookmark_slot = Some(2);
+        input.recall_bookmark_snap = true;
+    }
+    app.update();
+
+    let bookmarks = app
+        .world()
+        .get::<RtsCameraBookmarks>(entity)
+        .expect("bookmarks should exist");
+    let bookmark = bookmarks.get(2).expect("bookmark should be stored");
+    let camera = app.world().get::<RtsCamera>(entity).expect("camera exists");
+    let runtime = app
+        .world()
+        .get::<RtsCameraRuntime>(entity)
+        .expect("runtime exists");
+
+    assert_eq!(camera.target_focus, bookmark.focus);
+    assert!((camera.target_yaw - bookmark.yaw).abs() < 0.001);
+    assert!((camera.target_distance - bookmark.distance).abs() < 0.001);
+    assert!(runtime.focus.distance(bookmark.focus) < 0.001);
+    assert!((runtime.yaw - bookmark.yaw).abs() < 0.001);
+    assert!((runtime.distance - bookmark.distance).abs() < 0.001);
+}
+
+#[test]
+fn fly_to_focus_updates_target_state_without_forcing_a_snap() {
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins)
+        .add_plugins(RtsCameraPlugin::always_on(Update));
+    init_test_assets(&mut app);
+
+    let mut settings = RtsCameraSettings::default();
+    settings.ground.enabled = false;
+    let entity = spawn_camera(&mut app, settings);
+    start(&mut app);
+
+    {
+        let mut input = app
+            .world_mut()
+            .get_mut::<crate::RtsCameraInput>(entity)
+            .expect("input should exist");
+        input.fly_to_focus = Some(Vec3::new(10.0, 3.0, -6.0));
+        input.fly_to_yaw = Some(0.65);
+        input.fly_to_distance = Some(11.0);
+    }
+
+    app.update();
+
+    let camera = app.world().get::<RtsCamera>(entity).expect("camera exists");
+    let runtime = app
+        .world()
+        .get::<RtsCameraRuntime>(entity)
+        .expect("runtime exists");
+
+    assert_eq!(camera.target_focus, Vec3::new(10.0, 3.0, -6.0));
+    assert!((camera.target_yaw - 0.65).abs() < 0.001);
+    assert!((camera.target_distance - 11.0).abs() < 0.001);
+    assert!(runtime.focus.distance(camera.target_focus) > 0.001);
 }

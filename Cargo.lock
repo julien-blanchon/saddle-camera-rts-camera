@@ -536,21 +536,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_brp_extras"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b18cf96aca02864c841de224a05d0325e3a7b0ef3f35fcd8345631101685463e"
-dependencies = [
- "bevy",
- "bevy_remote",
- "serde",
- "serde_json",
- "strum",
- "strum_macros",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "bevy_camera"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -681,15 +666,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_e2e"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "bevy_ecs"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -737,31 +713,6 @@ checksum = "d4fee46eeddcbc00a805ae00ffa973f224671fc5cf0fe1a796963804faeade90"
 dependencies = [
  "bevy_macro_utils",
  "encase_derive_impl",
-]
-
-[[package]]
-name = "bevy_enhanced_input"
-version = "0.24.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fd528e0238ebc77e1e4737e55aa8f51188b7405eebc281f2498a627ae51a2e3"
-dependencies = [
- "bevy",
- "bevy_enhanced_input_macros",
- "bitflags 2.11.0",
- "log",
- "smallvec",
- "variadics_please",
-]
-
-[[package]]
-name = "bevy_enhanced_input_macros"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17ee73d4e362e2eb15ac58331c94e5076f6b5065761f008ca7dc930d446d205b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -1004,7 +955,6 @@ dependencies = [
  "bevy_post_process",
  "bevy_ptr",
  "bevy_reflect",
- "bevy_remote",
  "bevy_render",
  "bevy_scene",
  "bevy_shader",
@@ -1286,31 +1236,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_remote"
-version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0129e24bf3e281dd52996a9290c35f8c4821ca09e1ce8b8b222671e1ad9da0c"
-dependencies = [
- "anyhow",
- "async-channel",
- "async-io",
- "bevy_app",
- "bevy_asset",
- "bevy_derive",
- "bevy_ecs",
- "bevy_log",
- "bevy_platform",
- "bevy_reflect",
- "bevy_tasks",
- "bevy_utils",
- "http-body-util",
- "hyper",
- "serde",
- "serde_json",
- "smol-hyper",
-]
-
-[[package]]
 name = "bevy_render"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1503,7 +1428,6 @@ checksum = "384eb04d80aa38664d69988fd30cbbe03e937ecb65c66aa6abe60ce0bca826aa"
 dependencies = [
  "async-channel",
  "async-executor",
- "async-io",
  "async-task",
  "atomic-waker",
  "bevy_platform",
@@ -2944,71 +2868,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 
 [[package]]
-name = "http"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3ba2a386d7f85a81f119ad7498ebe444d2e22c2af0b86b069416ace48b3311a"
-dependencies = [
- "bytes",
- "itoa",
-]
-
-[[package]]
-name = "http-body"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1efedce1fb8e6913f23e0c92de8e62cd5b772a67e7b3946df930a62566c93184"
-dependencies = [
- "bytes",
- "http",
-]
-
-[[package]]
-name = "http-body-util"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b021d93e26becf5dc7e1b75b1bed1fd93124b374ceb73f43d4d4eafec896a64a"
-dependencies = [
- "bytes",
- "futures-core",
- "http",
- "http-body",
- "pin-project-lite",
-]
-
-[[package]]
-name = "httparse"
-version = "1.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
-
-[[package]]
-name = "httpdate"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
-
-[[package]]
-name = "hyper"
-version = "1.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6299f016b246a94207e63da54dbe807655bf9e00044f73ded42c3ac5305fbcca"
-dependencies = [
- "atomic-waker",
- "bytes",
- "futures-channel",
- "futures-core",
- "http",
- "http-body",
- "httparse",
- "httpdate",
- "itoa",
- "pin-project-lite",
- "smallvec",
- "tokio",
-]
-
-[[package]]
 name = "id-arena"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4346,88 +4205,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c20b6793b5c2fa6553b250154b78d6d0db37e72700ae35fad9387a46f487c97"
 
 [[package]]
-name = "rts_camera"
-version = "0.1.0"
-dependencies = [
- "bevy",
-]
-
-[[package]]
-name = "rts_camera_example_basic"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "rts_camera",
- "rts_camera_example_common",
-]
-
-[[package]]
-name = "rts_camera_example_bounds"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "rts_camera",
- "rts_camera_example_common",
-]
-
-[[package]]
-name = "rts_camera_example_common"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_enhanced_input",
- "rts_camera",
-]
-
-[[package]]
-name = "rts_camera_example_cursor_zoom"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "rts_camera",
- "rts_camera_example_common",
-]
-
-[[package]]
-name = "rts_camera_example_enhanced_input"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "rts_camera",
- "rts_camera_example_common",
-]
-
-[[package]]
-name = "rts_camera_example_follow_target"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "rts_camera",
- "rts_camera_example_common",
-]
-
-[[package]]
-name = "rts_camera_example_terrain_follow"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "rts_camera",
- "rts_camera_example_common",
-]
-
-[[package]]
-name = "rts_camera_lab"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_brp_extras",
- "bevy_e2e",
- "bevy_enhanced_input",
- "rts_camera",
- "rts_camera_example_common",
-]
-
-[[package]]
 name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4487,6 +4264,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5ff0cc5e135c8870a775d3320910cd9b564ec036b4dc0b8741629020be63f01"
 dependencies = [
  "twox-hash",
+]
+
+[[package]]
+name = "saddle-camera-rts-camera"
+version = "0.1.0"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
@@ -4577,7 +4361,6 @@ version = "1.0.149"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
 dependencies = [
- "indexmap",
  "itoa",
  "memchr",
  "serde",
@@ -4692,19 +4475,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "smol-hyper"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7428a49d323867702cd12b97b08a6b0104f39ec13b49117911f101271321bc1a"
-dependencies = [
- "async-executor",
- "async-io",
- "futures-io",
- "hyper",
- "pin-project-lite",
-]
-
-[[package]]
 name = "smol_str"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4757,24 +4527,6 @@ name = "strict-num"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6637bab7722d379c8b41ba849228d680cc12d0a45ba1fa2b48f2a30577a06731"
-
-[[package]]
-name = "strum"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9628de9b8791db39ceda2b119bbe13134770b56c138ec1d3af810d045c04f9bd"
-
-[[package]]
-name = "strum_macros"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab85eea0270ee17587ed4156089e10b9e6880ee688791d45a905f5b1ca36f664"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "svg_fmt"
@@ -4936,15 +4688,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "tokio"
-version = "1.50.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27ad5e34374e03cfffefc301becb44e9dc3c17584f414349ebe29ed26661822d"
-dependencies = [
- "pin-project-lite",
-]
 
 [[package]]
 name = "toml_datetime"

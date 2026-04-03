@@ -10,6 +10,8 @@ license = "MIT-0"
 [dependencies]
 bevy = { version = "0.18", features = ["serialize"] }
 
+[workspace]
+
 [lints.clippy]
 too_many_arguments = "allow"
 type_complexity = "allow"

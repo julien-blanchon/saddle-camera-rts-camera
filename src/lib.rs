@@ -2,11 +2,13 @@ mod components;
 mod config;
 mod input;
 mod math;
+mod messages;
 mod systems;
 
 pub use components::{
-    RtsCamera, RtsCameraDebug, RtsCameraFallbackControls, RtsCameraFollow, RtsCameraGround,
-    RtsCameraInput, RtsCameraInputTarget, RtsCameraRuntime,
+    RtsCamera, RtsCameraBookmark, RtsCameraBookmarks, RtsCameraDebug,
+    RtsCameraFallbackControls, RtsCameraFollow, RtsCameraGround, RtsCameraInput,
+    RtsCameraInputTarget, RtsCameraRuntime,
 };
 pub use config::{
     RtsCameraAnchorSettings, RtsCameraBounds, RtsCameraBoundsMode, RtsCameraControlFlags,
@@ -14,6 +16,7 @@ pub use config::{
     RtsCameraMotionSettings, RtsCameraPitchSettings, RtsCameraRotationPivotMode, RtsCameraSettings,
     RtsCameraZoomAnchorMode,
 };
+pub use messages::{RtsCameraBookmarkRecalled, RtsCameraBookmarkStored, RtsCameraFlyToApplied};
 pub use math::{
     camera_pitch_for_distance, camera_transform_from_state, clamp_distance, pan_vector_from_yaw,
     resolve_ground_height_target, shortest_angle_delta, smooth_angle, smooth_scalar,
@@ -88,6 +91,8 @@ impl Plugin for RtsCameraPlugin {
             .register_type::<RtsCameraAnchorSettings>()
             .register_type::<RtsCameraBounds>()
             .register_type::<RtsCameraBoundsMode>()
+            .register_type::<RtsCameraBookmark>()
+            .register_type::<RtsCameraBookmarks>()
             .register_type::<RtsCameraControlFlags>()
             .register_type::<RtsCameraDebug>()
             .register_type::<RtsCameraDistanceSettings>()
@@ -104,6 +109,9 @@ impl Plugin for RtsCameraPlugin {
             .register_type::<RtsCameraRuntime>()
             .register_type::<RtsCameraSettings>()
             .register_type::<RtsCameraZoomAnchorMode>()
+            .add_message::<RtsCameraBookmarkStored>()
+            .add_message::<RtsCameraBookmarkRecalled>()
+            .add_message::<RtsCameraFlyToApplied>()
             .add_systems(self.activate_schedule, activate_runtime)
             .add_systems(self.deactivate_schedule, deactivate_runtime)
             .add_systems(self.activate_schedule, systems::initialize_added_cameras)
@@ -128,6 +136,7 @@ impl Plugin for RtsCameraPlugin {
                 self.update_schedule,
                 (
                     systems::initialize_added_cameras,
+                    systems::apply_programmatic_commands,
                     systems::sync_follow_targets,
                     systems::apply_camera_input,
                 )
