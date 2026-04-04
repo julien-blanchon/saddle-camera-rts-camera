@@ -4979,8 +4979,6 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "saddle-camera-rts-camera",
- "saddle-camera-rts-camera-example-common",
- "saddle-pane",
 ]
 
 [[package]]
@@ -4999,8 +4997,6 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "saddle-camera-rts-camera",
- "saddle-camera-rts-camera-example-common",
- "saddle-pane",
 ]
 
 [[package]]
@@ -5022,8 +5018,6 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "saddle-camera-rts-camera",
- "saddle-camera-rts-camera-example-common",
- "saddle-pane",
 ]
 
 [[package]]
@@ -5031,9 +5025,8 @@ name = "saddle-camera-rts-camera-example-enhanced-input"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_enhanced_input",
  "saddle-camera-rts-camera",
- "saddle-camera-rts-camera-example-common",
- "saddle-pane",
 ]
 
 [[package]]
@@ -5052,8 +5045,6 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "saddle-camera-rts-camera",
- "saddle-camera-rts-camera-example-common",
- "saddle-pane",
 ]
 
 [[package]]
