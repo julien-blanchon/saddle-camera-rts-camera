@@ -10,10 +10,10 @@ pub use components::{
     RtsCameraFollow, RtsCameraGround, RtsCameraInput, RtsCameraInputTarget, RtsCameraRuntime,
 };
 pub use config::{
-    RtsCameraAnchorSettings, RtsCameraBounds, RtsCameraBoundsMode, RtsCameraControlFlags,
-    RtsCameraDistanceSettings, RtsCameraEdgePanSettings, RtsCameraGroundSettings,
-    RtsCameraMotionSettings, RtsCameraPitchSettings, RtsCameraRotationPivotMode, RtsCameraSettings,
-    RtsCameraZoomAnchorMode,
+    RtsCameraAnchorSettings, RtsCameraBounds, RtsCameraBoundsMode, RtsCameraCollisionSettings,
+    RtsCameraControlFlags, RtsCameraDistanceSettings, RtsCameraEdgePanSettings,
+    RtsCameraGroundSettings, RtsCameraMotionSettings, RtsCameraPitchSettings,
+    RtsCameraRotationPivotMode, RtsCameraSettings, RtsCameraZoomAnchorMode,
 };
 pub use math::{
     camera_pitch_for_distance, camera_transform_from_state, clamp_distance, pan_vector_from_yaw,
@@ -39,6 +39,7 @@ pub enum RtsCameraSystems {
     FollowGround,
     ApplyBounds,
     AdvanceRuntime,
+    ResolveCollision,
     SyncTransform,
     Debug,
 }
@@ -107,6 +108,7 @@ impl Plugin for RtsCameraPlugin {
             .register_type::<RtsCameraRotationPivotMode>()
             .register_type::<RtsCameraRuntime>()
             .register_type::<RtsCameraSettings>()
+            .register_type::<RtsCameraCollisionSettings>()
             .register_type::<RtsCameraZoomAnchorMode>()
             .add_message::<RtsCameraBookmarkStored>()
             .add_message::<RtsCameraBookmarkRecalled>()
@@ -164,7 +166,18 @@ impl Plugin for RtsCameraPlugin {
             )
             .configure_sets(
                 PostUpdate,
-                (RtsCameraSystems::SyncTransform, RtsCameraSystems::Debug),
+                (
+                    RtsCameraSystems::ResolveCollision,
+                    RtsCameraSystems::SyncTransform,
+                    RtsCameraSystems::Debug,
+                )
+                    .chain(),
+            )
+            .add_systems(
+                PostUpdate,
+                systems::resolve_camera_collision
+                    .in_set(RtsCameraSystems::ResolveCollision)
+                    .run_if(runtime_is_active),
             )
             .add_systems(
                 PostUpdate,

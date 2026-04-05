@@ -42,7 +42,7 @@ fn setup(
         &mut meshes,
         &mut materials,
         "rts_camera follow_target",
-        "The camera keeps its yaw and zoom while tracking the moving target.\nManual pan adjusts follow offset instead of fighting the follow system.",
+        "The camera follows a moving target while preserving yaw and zoom.\nManual pan adjusts follow offset rather than fighting the follow system.\n\nControls:\nWASD - Pan (adjusts offset)  |  Q/E - Rotate  |  Wheel - Zoom\nToggle follow in the pane to switch between follow and free camera.",
         Color::srgb(0.88, 0.28, 0.40),
         common::TerrainStyle::Uneven,
     );

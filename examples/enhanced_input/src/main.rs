@@ -7,7 +7,9 @@
 //! Controls: WASD pan, Q/E rotate, RMB drag-pan, MMB drag-rotate, wheel zoom,
 //! Alt toggles cursor zoom, edge-pan from viewport borders.
 
-use bevy::{app::AppExit, camera::Projection, light::GlobalAmbientLight, prelude::*, window::PrimaryWindow};
+use bevy::{
+    app::AppExit, camera::Projection, light::GlobalAmbientLight, prelude::*, window::PrimaryWindow,
+};
 use bevy_enhanced_input::context::InputContextAppExt;
 use bevy_enhanced_input::prelude::{
     Action, Axial, Bidirectional, Binding, Bindings, Cardinal, EnhancedInputPlugin,
@@ -272,13 +274,18 @@ fn setup(
         },
         BackgroundColor(Color::srgba(0.02, 0.03, 0.05, 0.80)),
         Text::new(
-            "rts_camera enhanced_input\n\
-             Production input path using bevy_enhanced_input.\n\
-             WASD pan, Q/E rotate, RMB drag pan, MMB drag rotate, wheel zoom,\n\
-             Alt toggles cursor zoom, edge pan from viewport borders.",
+            "rts_camera enhanced_input\n\n\
+             Controls (bevy_enhanced_input production path):\n\
+             WASD / left stick     -  Pan\n\
+             Q / E / DPad          -  Rotate\n\
+             Mouse wheel            -  Zoom\n\
+             Alt + wheel             -  Cursor zoom\n\
+             RMB / LT               -  Drag pan\n\
+             MMB / RT               -  Drag rotate\n\
+             Screen edge             -  Edge pan",
         ),
         TextFont {
-            font_size: 15.0,
+            font_size: 14.0,
             ..default()
         },
         TextColor(Color::WHITE),
@@ -310,8 +317,12 @@ fn write_enhanced_input(
 
     // Edge-pan: accelerate toward whichever screen border the cursor is near
     if settings.controls.edge_pan {
-        camera_input.edge_pan +=
-            edge_pan_delta(camera, window, window.cursor_position(), settings.edge_pan.margin);
+        camera_input.edge_pan += edge_pan_delta(
+            camera,
+            window,
+            window.cursor_position(),
+            settings.edge_pan.margin,
+        );
     }
 
     camera_input.rotate += ***rotate;

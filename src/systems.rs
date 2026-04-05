@@ -203,7 +203,7 @@ pub(crate) fn apply_camera_input(
             total_pan += input.pan;
         }
         if settings.controls.edge_pan {
-            total_pan += input.edge_pan;
+            total_pan += input.edge_pan * settings.edge_pan.speed_factor;
         }
 
         if total_pan.length_squared() > 0.0 {
@@ -327,10 +327,16 @@ pub(crate) fn resolve_ground_height(
             continue;
         }
 
+        // Probe at the smoothed runtime position rather than the unsmoothed
+        // target. This prevents the ground height from jumping ahead of the
+        // visual camera position, which otherwise causes a visible bounce
+        // when panning fast across uneven terrain.
+        let probe_x = runtime.focus.x;
+        let probe_z = runtime.focus.z;
         let probe_origin = Vec3::new(
-            camera.target_focus.x,
+            probe_x,
             camera.target_focus.y + settings.ground.probe_height,
-            camera.target_focus.z,
+            probe_z,
         );
         let Some(ray) = Dir3::new(Vec3::NEG_Y)
             .ok()
@@ -437,6 +443,47 @@ pub(crate) fn advance_runtime(
         runtime.pitch =
             camera_pitch_for_distance(runtime.distance, &settings.distance, &settings.pitch);
         camera.snap = false;
+    }
+}
+
+/// Prevents the camera eye from clipping through `RtsCameraGround` meshes.
+///
+/// A ray is cast from the smoothed focus toward the computed eye position.
+/// If terrain intersects the ray closer than `runtime.distance`, the
+/// distance is clamped so the eye stays in front of the obstacle.
+pub(crate) fn resolve_camera_collision(
+    mut ray_cast: MeshRayCast,
+    ground: Query<Entity, With<RtsCameraGround>>,
+    mut cameras: Query<(&RtsCameraSettings, &mut RtsCameraRuntime), With<RtsCamera>>,
+) {
+    for (settings, mut runtime) in &mut cameras {
+        if !settings.collision.enabled {
+            continue;
+        }
+
+        let rotation = Quat::from_euler(EulerRot::YXZ, runtime.yaw, -runtime.pitch, 0.0);
+        let forward = rotation * Vec3::NEG_Z;
+        let Ok(backward) = Dir3::new(-forward) else {
+            continue;
+        };
+
+        let ray = Ray3d::new(runtime.focus, backward);
+        let filter = |entity| ground.get(entity).is_ok();
+        let ray_settings = MeshRayCastSettings {
+            filter: &filter,
+            ..default()
+        };
+
+        if let Some((_, hit)) = ray_cast.cast_ray(ray, &ray_settings).first() {
+            let hit_distance = hit.distance;
+            if hit_distance < runtime.distance + settings.collision.clearance {
+                let clamped = (hit_distance - settings.collision.clearance)
+                    .max(settings.collision.min_distance);
+                if clamped < runtime.distance {
+                    runtime.distance = clamped;
+                }
+            }
+        }
     }
 }
 

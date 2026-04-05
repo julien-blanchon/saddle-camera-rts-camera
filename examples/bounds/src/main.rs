@@ -165,12 +165,18 @@ fn setup(
         },
         BackgroundColor(Color::srgba(0.02, 0.03, 0.05, 0.80)),
         Text::new(
-            "rts_camera bounds\n\
-             Soft bounds compress motion near the map edge instead of abruptly stopping.\n\
+            "rts_camera bounds\n\n\
+             Controls:\n\
+             WASD / screen edge  -  Pan\n\
+             Q / E               -  Rotate\n\
+             Mouse wheel          -  Zoom\n\
+             RMB drag             -  Drag pan\n\
+             MMB drag             -  Drag rotate\n\n\
+             Soft bounds compress motion near the map edge.\n\
              The red debug loop shows the playable focus area.",
         ),
         TextFont {
-            font_size: 15.0,
+            font_size: 14.0,
             ..default()
         },
         TextColor(Color::WHITE),

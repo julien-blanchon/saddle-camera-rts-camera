@@ -187,13 +187,18 @@ fn setup(
         },
         BackgroundColor(Color::srgba(0.02, 0.03, 0.05, 0.80)),
         Text::new(
-            "rts_camera cursor_zoom\n\
-             Wheel zooms toward focus by default.\n\
-             Hold Alt while scrolling to preserve the cursor-ground anchor.\n\
-             Debug gizmos show the active anchor.",
+            "rts_camera cursor_zoom\n\n\
+             Controls:\n\
+             WASD / screen edge  -  Pan\n\
+             Q / E               -  Rotate\n\
+             Mouse wheel          -  Zoom (toward focus)\n\
+             Alt + wheel           -  Zoom (toward cursor)\n\
+             RMB drag             -  Drag pan\n\
+             MMB drag             -  Drag rotate\n\n\
+             Debug gizmos show the active zoom anchor.",
         ),
         TextFont {
-            font_size: 15.0,
+            font_size: 14.0,
             ..default()
         },
         TextColor(Color::WHITE),

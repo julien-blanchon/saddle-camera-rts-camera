@@ -43,7 +43,7 @@ fn setup(
         &mut meshes,
         &mut materials,
         "rts_camera bookmarks",
-        "Battlefield command posts with RTS bookmark recall.\nUse WASD/QE/mouse to scout, press 1/2/3 to fly to stored views, or hold Ctrl + 1/2/3 to overwrite them.",
+        "Battlefield command posts with RTS bookmark recall.\n\nControls:\nWASD / screen edge - Pan  |  Q/E - Rotate  |  Wheel - Zoom\nRMB drag - Drag pan  |  MMB drag - Drag rotate\n1 / 2 / 3 - Fly to stored bookmark\nCtrl + 1/2/3 - Overwrite bookmark with current view",
         Color::srgb(0.96, 0.60, 0.18),
         common::TerrainStyle::Uneven,
     );

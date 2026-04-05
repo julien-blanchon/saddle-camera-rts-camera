@@ -11,6 +11,7 @@ pub struct RtsCameraSettings {
     pub anchors: RtsCameraAnchorSettings,
     pub controls: RtsCameraControlFlags,
     pub edge_pan: RtsCameraEdgePanSettings,
+    pub collision: RtsCameraCollisionSettings,
 }
 
 #[derive(Clone, Debug, Reflect)]
@@ -65,7 +66,7 @@ impl Default for RtsCameraMotionSettings {
             rotation_speed: 1.9,
             drag_rotation_speed: 0.009,
             focus_decay: 18.0,
-            ground_decay: 10.0,
+            ground_decay: 14.0,
             yaw_decay: 18.0,
             distance_decay: 16.0,
         }
@@ -93,12 +94,20 @@ impl Default for RtsCameraGroundSettings {
 
 #[derive(Clone, Debug, Reflect)]
 pub struct RtsCameraEdgePanSettings {
+    /// Width in logical pixels of the edge-pan activation band.
     pub margin: f32,
+    /// Multiplier applied to the computed pan speed for edge-pan movement.
+    /// A value of 1.0 gives the same speed as keyboard pan. Use a smaller
+    /// value for a gentler screen-edge glide.
+    pub speed_factor: f32,
 }
 
 impl Default for RtsCameraEdgePanSettings {
     fn default() -> Self {
-        Self { margin: 18.0 }
+        Self {
+            margin: 18.0,
+            speed_factor: 1.0,
+        }
     }
 }
 
@@ -152,6 +161,31 @@ pub enum RtsCameraZoomAnchorMode {
 pub enum RtsCameraRotationPivotMode {
     Focus,
     Cursor,
+}
+
+#[derive(Clone, Debug, Reflect)]
+pub struct RtsCameraCollisionSettings {
+    /// When `true`, the runtime casts a ray from the focus toward the
+    /// computed eye position each frame. If `RtsCameraGround` terrain
+    /// intersects that ray, the camera distance is clamped so the eye
+    /// stays in front of the obstacle.
+    pub enabled: bool,
+    /// Extra clearance above the collision surface so the eye does not
+    /// sit exactly on top of the terrain.
+    pub clearance: f32,
+    /// The camera distance will never be reduced below this value by
+    /// collision. Prevents the camera from being pushed too close.
+    pub min_distance: f32,
+}
+
+impl Default for RtsCameraCollisionSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            clearance: 1.5,
+            min_distance: 2.0,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Reflect)]

@@ -137,14 +137,24 @@ fn setup(
         Transform::from_xyz(0.0, 1.2, 0.0),
     ));
 
+    // -- Steep cliff to demonstrate collision avoidance --
+    commands.spawn((
+        Name::new("Cliff Wall"),
+        Mesh3d(meshes.add(Cuboid::new(6.0, 6.0, 12.0))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.35, 0.28, 0.22),
+            perceptual_roughness: 0.98,
+            ..default()
+        })),
+        Transform::from_xyz(-6.0, 3.0, -4.0),
+        RtsCameraGround,
+    ));
+
     // -- Camera --
     //
     // Start looking at one of the elevated areas so the terrain-follow
     // effect is immediately visible when you pan around.
-    let camera = RtsCamera::looking_at(
-        Vec3::new(8.0, 0.0, -8.0),
-        Vec3::new(-18.0, 20.0, 18.0),
-    );
+    let camera = RtsCamera::looking_at(Vec3::new(8.0, 0.0, -8.0), Vec3::new(-18.0, 20.0, 18.0));
     let settings = RtsCameraSettings::default();
 
     commands.spawn((
@@ -168,19 +178,25 @@ fn setup(
             position_type: PositionType::Absolute,
             left: Val::Px(18.0),
             top: Val::Px(18.0),
-            width: Val::Px(430.0),
+            width: Val::Px(460.0),
             padding: UiRect::all(Val::Px(14.0)),
             ..default()
         },
         BackgroundColor(Color::srgba(0.02, 0.03, 0.05, 0.80)),
         Text::new(
-            "rts_camera terrain_follow\n\
-             Move across the ramps and plateau.\n\
-             The runtime keeps focus height above the marked ground meshes\n\
-             and draws debug gizmos.",
+            "rts_camera terrain_follow\n\n\
+             Controls:\n\
+             WASD / screen edge  -  Pan\n\
+             Q / E               -  Rotate\n\
+             Mouse wheel          -  Zoom\n\
+             RMB drag             -  Drag pan\n\
+             MMB drag             -  Drag rotate\n\n\
+             Pan across the ramps, plateau, and cliff wall.\n\
+             Focus height follows the ground smoothly.\n\
+             Camera collision prevents clipping through the cliff.",
         ),
         TextFont {
-            font_size: 15.0,
+            font_size: 14.0,
             ..default()
         },
         TextColor(Color::WHITE),

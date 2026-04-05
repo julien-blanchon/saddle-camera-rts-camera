@@ -143,12 +143,17 @@ fn setup(
         },
         BackgroundColor(Color::srgba(0.02, 0.03, 0.05, 0.80)),
         Text::new(
-            "rts_camera basic\n\
-             Fallback raw input path.\n\
-             WASD or screen edge pan, Q/E rotate, RMB drag pan, MMB drag rotate, wheel zoom.",
+            "rts_camera basic\n\n\
+             Controls:\n\
+             WASD / screen edge  -  Pan\n\
+             Q / E               -  Rotate\n\
+             Mouse wheel          -  Zoom\n\
+             RMB drag             -  Drag pan\n\
+             MMB drag             -  Drag rotate\n\n\
+             Fallback raw input path (no bevy_enhanced_input).",
         ),
         TextFont {
-            font_size: 15.0,
+            font_size: 14.0,
             ..default()
         },
         TextColor(Color::WHITE),

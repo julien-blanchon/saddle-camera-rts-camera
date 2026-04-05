@@ -89,6 +89,14 @@ pub struct ExampleRtsPane {
     pub rotation_speed: f32,
     #[pane(slider, min = 0.0, max = 64.0, step = 1.0)]
     pub edge_margin: f32,
+    #[pane(slider, min = 1.0, max = 40.0, step = 0.5)]
+    pub focus_decay: f32,
+    #[pane(slider, min = 1.0, max = 40.0, step = 0.5)]
+    pub ground_decay: f32,
+    #[pane(toggle)]
+    pub collision_enabled: bool,
+    #[pane(slider, min = 0.0, max = 5.0, step = 0.1)]
+    pub collision_clearance: f32,
     #[pane(monitor)]
     pub runtime_focus_x: f32,
     #[pane(monitor)]
@@ -111,6 +119,10 @@ impl Default for ExampleRtsPane {
             zoom_speed: 2.8,
             rotation_speed: 1.9,
             edge_margin: 18.0,
+            focus_decay: 18.0,
+            ground_decay: 14.0,
+            collision_enabled: true,
+            collision_clearance: 1.5,
             runtime_focus_x: 0.0,
             runtime_focus_z: 0.0,
             runtime_distance: 18.0,
@@ -137,6 +149,10 @@ impl ExampleRtsPane {
             zoom_speed: settings.motion.zoom_speed,
             rotation_speed: settings.motion.rotation_speed,
             edge_margin: settings.edge_pan.margin,
+            focus_decay: settings.motion.focus_decay,
+            ground_decay: settings.motion.ground_decay,
+            collision_enabled: settings.collision.enabled,
+            collision_clearance: settings.collision.clearance,
             runtime_focus_x: camera.target_focus.x,
             runtime_focus_z: camera.target_focus.z,
             runtime_distance: camera.target_distance,
@@ -613,10 +629,11 @@ fn sync_example_pane(
     )>,
 ) {
     let has_bootstrap = bootstrap.is_some();
-    if let Some(bootstrap) = bootstrap {
-        if *pane == ExampleRtsPane::default() && bootstrap.0 != *pane {
-            *pane = bootstrap.0;
-        }
+    if let Some(bootstrap) = bootstrap
+        && *pane == ExampleRtsPane::default()
+        && bootstrap.0 != *pane
+    {
+        *pane = bootstrap.0;
     }
 
     for (entity, mut camera, mut settings, fallback_controls, follow, debug) in &mut cameras {
@@ -641,6 +658,10 @@ fn sync_example_pane(
         settings.motion.zoom_speed = pane.zoom_speed.max(0.0);
         settings.motion.rotation_speed = pane.rotation_speed.max(0.0);
         settings.edge_pan.margin = pane.edge_margin.max(0.0);
+        settings.motion.focus_decay = pane.focus_decay.max(0.0);
+        settings.motion.ground_decay = pane.ground_decay.max(0.0);
+        settings.collision.enabled = pane.collision_enabled;
+        settings.collision.clearance = pane.collision_clearance.max(0.0);
         settings.anchors.zoom_anchor = if pane.cursor_zoom {
             RtsCameraZoomAnchorMode::Cursor
         } else {

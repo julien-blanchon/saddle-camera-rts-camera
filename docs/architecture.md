@@ -7,8 +7,9 @@
 3. `FollowGround`
 4. `ApplyBounds`
 5. `AdvanceRuntime`
-6. `SyncTransform`
-7. `Debug`
+6. `ResolveCollision`
+7. `SyncTransform`
+8. `Debug`
 
 The phases are exposed as public `SystemSet`s so a consumer can order other gameplay, tool, or presentation systems around them.
 
@@ -106,7 +107,7 @@ This step exists only for the raw fallback path. If no camera carries `RtsCamera
 
 Terrain probing is intentionally generic:
 
-- a downward `MeshRayCast` is fired from above `target_focus`
+- a downward `MeshRayCast` is fired from above the **smoothed** runtime focus position
 - only entities marked `RtsCameraGround` participate
 - hit height is converted into desired focus height by adding `ground.clearance`
 - `ground.keep_last_height_on_miss` determines whether the last valid height is retained when no ground mesh is hit
@@ -161,6 +162,17 @@ Pitch is derived from zoom distance, not integrated separately.
 
 The resolved `distance` value determines pitch every frame, which keeps zoom and pitch coupling stable and predictable.
 
+## Collision Avoidance
+
+After the runtime state is advanced, `ResolveCollision` prevents the camera eye from clipping through ground meshes.
+
+- A backward ray is cast from the smoothed focus along the camera's look-back direction
+- Only entities marked `RtsCameraGround` participate
+- If terrain is closer than `runtime.distance + collision.clearance`, the runtime distance is clamped to `hit_distance - clearance`, floored at `collision.min_distance`
+- The collision system only ever reduces runtime distance — it never increases it, so the target-state smoothing path remains authoritative for zoom-out
+
+This is the same "spring arm" pattern used by Unreal Engine's camera boom. It runs after `AdvanceRuntime` so it sees the fully smoothed state, and before `SyncTransform` so the corrected distance is what reaches the final `Transform`.
+
 ## Final Transform
 
 `SyncTransform` runs in `PostUpdate` before transform propagation and writes the final `Transform` from:
@@ -184,6 +196,8 @@ Keeping this step in `PostUpdate` means consumer systems can order world simulat
   Lets projects enforce additional map or scenario limits.
 - `AdvanceRuntime`
   Lets downstream systems read the smoothed runtime state before render sync.
+- `ResolveCollision`
+  Lets projects replace or augment camera-terrain collision avoidance.
 - `SyncTransform`
   Lets presentation systems order around the final camera pose.
 - `Debug`

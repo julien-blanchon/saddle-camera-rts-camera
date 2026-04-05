@@ -12,6 +12,7 @@ Target-state camera model with smoothing, terrain probing, bounds, cursor-aware 
 - Terrain-aware focus height using Bevy mesh ray casts
 - Zoom-anchor and rotation-pivot policies driven by focus or cursor-ground hits
 - Bounded camera travel with hard or soft map limits
+- Camera collision avoidance against terrain to prevent clipping
 - Follow-target views for alerts, spectating, and points of interest
 - Programmatic fly-to commands and bookmark save/recall for RTS workflows
 
@@ -70,11 +71,11 @@ For always-on tools and examples, `RtsCameraPlugin::always_on(Update)` is the co
 | Type | Purpose |
 | --- | --- |
 | `RtsCameraPlugin` | Registers the runtime with injectable activate, deactivate, and update schedules |
-| `RtsCameraSystems` | Public ordering hooks: `ReadInput`, `ResolveTarget`, `FollowGround`, `ApplyBounds`, `AdvanceRuntime`, `SyncTransform`, `Debug` |
+| `RtsCameraSystems` | Public ordering hooks: `ReadInput`, `ResolveTarget`, `FollowGround`, `ApplyBounds`, `AdvanceRuntime`, `ResolveCollision`, `SyncTransform`, `Debug` |
 | `RtsCamera` | Main controller component containing desired focus, yaw, distance, and snap requests |
 | `RtsCameraRuntime` | Smoothed runtime state: focus, yaw, pitch, distance, ground height, last ground hit, last cursor anchor |
 | `RtsCameraBookmark` / `RtsCameraBookmarks` | Captured camera views for RTS-style bookmark save/recall |
-| `RtsCameraSettings` | Top-level tuning surface for distance, pitch, motion, bounds, terrain follow, anchors, and control flags |
+| `RtsCameraSettings` | Top-level tuning surface for distance, pitch, motion, bounds, terrain follow, collision, anchors, and control flags |
 | `RtsCameraBounds` / `RtsCameraBoundsMode` | Hard or soft travel limits for focus XZ |
 | `RtsCameraGround` | Marker for meshes that participate in terrain-follow and cursor-ground ray casts |
 | `RtsCameraFollow` | Optional follow-target seam with offset and snap behavior |

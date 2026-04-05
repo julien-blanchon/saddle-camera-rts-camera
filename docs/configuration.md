@@ -14,6 +14,7 @@
 | `anchors` | `RtsCameraAnchorSettings` | cursor zoom, focus rotation | enum values below | Cursor-aware zoom and rotation policy | Depends on a successful cursor-ground hit |
 | `controls` | `RtsCameraControlFlags` | all enabled | booleans | Runtime gating for control families | Disables handling without removing components |
 | `edge_pan` | `RtsCameraEdgePanSettings` | margin `18.0` | `>= 0` | Screen-edge panning threshold | Used by fallback input and example BEI bridge |
+| `collision` | `RtsCameraCollisionSettings` | enabled, clearance `1.5` | per field | Camera-terrain collision avoidance | Prevents eye from clipping through ground |
 
 ## `RtsCameraDistanceSettings`
 
@@ -43,7 +44,7 @@ Smaller angles feel more top-down. Larger angles feel more inspectable and chara
 | `rotation_speed` | `f32` | `1.9` | `>= 0` | Keyboard or axis yaw speed in radians per second | Used with `input.rotate` |
 | `drag_rotation_speed` | `f32` | `0.009` | `>= 0` | Drag-rotation multiplier per pointer delta pixel | Used with `input.rotate_drag_delta` |
 | `focus_decay` | `f32` | `18.0` | `>= 0` | Horizontal focus smoothing | `0.0` snaps immediately |
-| `ground_decay` | `f32` | `10.0` | `>= 0` | Vertical focus smoothing | Keep separate from horizontal for slope stability |
+| `ground_decay` | `f32` | `14.0` | `>= 0` | Vertical focus smoothing | Keep separate from horizontal for slope stability |
 | `yaw_decay` | `f32` | `18.0` | `>= 0` | Yaw smoothing | Uses shortest-angle interpolation |
 | `distance_decay` | `f32` | `16.0` | `>= 0` | Zoom smoothing | `0.0` snaps immediately |
 
@@ -114,13 +115,28 @@ Anchor interaction notes:
 | `rotation` | `bool` | `true` | `true` or `false` | Enables keyboard or drag yaw updates |
 | `follow` | `bool` | `true` | `true` or `false` | Enables `RtsCameraFollow` synchronization and follow-offset maintenance |
 
+## `RtsCameraCollisionSettings`
+
+| Field | Type | Default | Valid Range | Effect | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `enabled` | `bool` | `true` | `true` or `false` | Enables camera-terrain collision avoidance | When `false`, the camera eye can clip through ground meshes |
+| `clearance` | `f32` | `1.5` | `>= 0` | Minimum gap between terrain and the camera eye | Higher values keep the eye further from surfaces |
+| `min_distance` | `f32` | `2.0` | `> 0` | Floor for the collision-corrected distance | Prevents the camera from being pushed all the way to zero distance |
+
+Interaction notes:
+
+- Collision only ever reduces runtime distance — it never fights the zoom-out path.
+- The collision ray is cast from the smoothed focus toward the camera eye, so it benefits from the same stability as terrain probing.
+- Works with any `RtsCameraGround`-marked mesh, including vertical walls and cliffs.
+
 ## `RtsCameraEdgePanSettings`
 
 | Field | Type | Default | Valid Range | Effect |
 | --- | --- | --- | --- | --- |
 | `margin` | `f32` | `18.0` | `>= 0` | Width in logical pixels of the edge-pan activation band |
+| `speed_factor` | `f32` | `1.0` | `>= 0` | Multiplier applied to edge-pan contribution before it enters the pan pipeline |
 
-`margin = 0.0` effectively disables edge pan even if `controls.edge_pan` is still `true`.
+`margin = 0.0` effectively disables edge pan even if `controls.edge_pan` is still `true`. `speed_factor` lets consumers make edge pan faster or slower than keyboard pan without changing the main pan speed settings.
 
 ## `RtsCamera`
 
