@@ -1,5 +1,5 @@
 [package]
-name = "saddle-camera-rts-camera-example-basic"
+name = "saddle-camera-rts-camera-example-headless"
 version = "0.1.0"
 edition = "2024"
 publish = false

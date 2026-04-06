@@ -6,8 +6,9 @@ publish = false
 
 [dependencies]
 bevy = { workspace = true }
-bevy_enhanced_input = { workspace = true }
 saddle-camera-rts-camera = { workspace = true }
+saddle-camera-rts-camera-example-common = { path = "../common" }
+saddle-pane = { git = "https://github.com/julien-blanchon/saddle-pane" }
 
 [lints]
 workspace = true

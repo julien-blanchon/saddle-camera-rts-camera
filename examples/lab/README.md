@@ -23,6 +23,7 @@ cargo run -p saddle-camera-rts-camera-lab --features e2e -- rts_camera_controls
 cargo run -p saddle-camera-rts-camera-lab --features e2e -- rts_camera_pointer_controls
 cargo run -p saddle-camera-rts-camera-lab --features e2e -- rts_camera_follow_target
 cargo run -p saddle-camera-rts-camera-lab --features e2e -- rts_camera_bookmarks
+cargo run -p saddle-camera-rts-camera-lab --features e2e -- rts_camera_headless_intents
 ```
 
 ## BRP

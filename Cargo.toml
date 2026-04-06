@@ -7,6 +7,10 @@ description = "Reusable RTS pan, zoom, rotate, and terrain-follow camera for Bev
 repository = "https://github.com/julien-blanchon/saddle-camera-rts-camera"
 license = "MIT-0"
 
+[features]
+default = ["fallback-input"]
+fallback-input = []
+
 [dependencies]
 bevy = { version = "0.18", features = ["serialize"] }
 

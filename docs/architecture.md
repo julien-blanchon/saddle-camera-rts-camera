@@ -68,7 +68,7 @@ The examples and crate-local lab show a `bevy_enhanced_input` bridge that evalua
 
 ### Fallback path
 
-If a camera carries `RtsCameraFallbackControls`, the built-in `ReadInput` system reads Bevy keyboard, mouse, and accumulated scroll state and writes the same `RtsCameraInput` component. This is intentionally labeled fallback-only so the main runtime crate does not hard-depend on BEI or any project-specific input context.
+If the `fallback-input` feature is enabled and the app adds `RtsCameraFallbackInputPlugin`, cameras carrying `RtsCameraFallbackControls` can opt into a raw Bevy keyboard/mouse bridge that writes the same `RtsCameraInput` component. The fallback adapter lives outside the core plugin so the runtime stays headless by default and does not hard-depend on any specific physical input source.
 
 Only cameras tagged with `RtsCameraInputTarget` are candidates for shared pointer input. The active camera with the highest `Camera.order` wins.
 
@@ -76,9 +76,10 @@ Only cameras tagged with `RtsCameraInputTarget` are candidates for shared pointe
 
 ### `ReadInput`
 
-- `input::apply_fallback_controls`
+- consumer-owned input adapters
+- optional `fallback::apply_fallback_controls`
 
-This step exists only for the raw fallback path. If no camera carries `RtsCameraFallbackControls`, the set is effectively idle and the consumer-owned input adapter becomes the only writer of `RtsCameraInput`.
+The core plugin does not install any input reader by default. This set exists as a public seam for consumer-owned input adapters, and the optional `RtsCameraFallbackInputPlugin` uses it for the crate's raw RTS-style fallback mapping.
 
 ### `ResolveTarget`
 
@@ -187,7 +188,7 @@ Keeping this step in `PostUpdate` means consumer systems can order world simulat
 ## Why The Public Sets Exist
 
 - `ReadInput`
-  Lets consumers replace or augment the fallback input path.
+  Lets consumers install their own input bridge, automation writer, or the optional fallback input plugin before target resolution.
 - `ResolveTarget`
   Lets gameplay systems update follow targets, bookmarks, alerts, or tool focus points before smoothing.
 - `FollowGround`

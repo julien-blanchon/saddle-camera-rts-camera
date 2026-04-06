@@ -78,6 +78,7 @@ fn scenario_by_name(name: &str) -> Option<Scenario> {
         "rts_camera_pointer_controls" => Some(build_pointer_controls()),
         "rts_camera_follow_target" => Some(build_follow_target()),
         "rts_camera_bookmarks" => Some(build_bookmarks()),
+        "rts_camera_headless_intents" => Some(build_headless_intents()),
         _ => None,
     }
 }
@@ -90,6 +91,7 @@ fn list_scenarios() -> Vec<&'static str> {
         "rts_camera_pointer_controls",
         "rts_camera_follow_target",
         "rts_camera_bookmarks",
+        "rts_camera_headless_intents",
     ]
 }
 
@@ -505,6 +507,83 @@ fn build_bookmarks() -> Scenario {
             "rts_camera_bookmarks_runtime",
         ))
         .then(Action::Screenshot("rts_camera_bookmarks_after".into()))
+        .then(Action::WaitFrames(1))
+        .build()
+}
+
+fn build_headless_intents() -> Scenario {
+    Scenario::builder("rts_camera_headless_intents")
+        .description(
+            "Disable the manual control families, drive the camera through programmatic fly-to intents only, and verify the runtime still updates cleanly.",
+        )
+        .then(Action::WaitFrames(60))
+        .then(Action::Custom(Box::new(|world: &mut World| {
+            set_cursor_position(world, Vec2::new(720.0, 450.0));
+            store_runtime_baseline(world);
+
+            let Some(entity) = camera_entity(world) else {
+                return;
+            };
+
+            if let Some(mut settings) =
+                world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity)
+            {
+                settings.controls.pan = false;
+                settings.controls.edge_pan = false;
+                settings.controls.drag_pan = false;
+                settings.controls.zoom = false;
+                settings.controls.rotation = false;
+                settings.controls.follow = false;
+            }
+
+            if let Some(mut follow) = world.get_mut::<RtsCameraFollow>(entity) {
+                follow.enabled = false;
+            }
+
+            if let Some(mut pane) = world
+                .get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
+            {
+                pane.follow_enabled = false;
+            }
+        })))
+        .then(Action::Screenshot("rts_camera_headless_intents_before".into()))
+        .then(Action::WaitFrames(2))
+        .then(Action::Custom(Box::new(|world: &mut World| {
+            let Some(entity) = camera_entity(world) else {
+                return;
+            };
+
+            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
+                input.fly_to_focus = Some(Vec3::new(12.0, 0.0, 12.0));
+                input.fly_to_yaw = Some(-0.75);
+                input.fly_to_distance = Some(14.0);
+                input.fly_to_snap = false;
+            }
+        })))
+        .then(Action::WaitFrames(36))
+        .then(assertions::custom(
+            "programmatic fly-to works without manual input families enabled",
+            Box::new(|world: &World| {
+                let Some(baseline) = world.get_resource::<RuntimeBaseline>().copied() else {
+                    return false;
+                };
+                let Some(runtime) = runtime(world) else {
+                    return false;
+                };
+
+                runtime.focus.xz().distance(Vec2::new(12.0, 12.0)) < 2.5
+                    && (runtime.yaw - -0.75).abs() < 0.2
+                    && (runtime.distance - 14.0).abs() < 1.0
+                    && runtime.focus.distance(baseline.focus) > 4.0
+            }),
+        ))
+        .then(assertions::log_summary(
+            "rts_camera_headless_intents summary",
+        ))
+        .then(inspect::dump_component_json::<RtsCameraRuntime>(
+            "rts_camera_headless_intents_runtime",
+        ))
+        .then(Action::Screenshot("rts_camera_headless_intents_after".into()))
         .then(Action::WaitFrames(1))
         .build()
 }

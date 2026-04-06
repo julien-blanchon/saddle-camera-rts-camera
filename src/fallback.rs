@@ -1,12 +1,75 @@
 use bevy::{
+    ecs::{intern::Interned, schedule::ScheduleLabel},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
     prelude::*,
     window::PrimaryWindow,
 };
 
-use crate::{
-    RtsCamera, RtsCameraFallbackControls, RtsCameraInput, RtsCameraInputTarget, RtsCameraSettings,
-};
+use crate::{RtsCamera, RtsCameraInput, RtsCameraInputTarget, RtsCameraSettings, RtsCameraSystems};
+
+#[derive(Component, Clone, Debug, Reflect)]
+#[reflect(Component)]
+pub struct RtsCameraFallbackControls {
+    pub pan_up: KeyCode,
+    pub pan_down: KeyCode,
+    pub pan_left: KeyCode,
+    pub pan_right: KeyCode,
+    pub rotate_left: KeyCode,
+    pub rotate_right: KeyCode,
+    pub drag_pan_button: MouseButton,
+    pub rotate_drag_button: MouseButton,
+    pub zoom_to_cursor: bool,
+    pub zoom_to_cursor_modifier: Option<KeyCode>,
+    pub enabled: bool,
+}
+
+impl Default for RtsCameraFallbackControls {
+    fn default() -> Self {
+        Self {
+            pan_up: KeyCode::KeyW,
+            pan_down: KeyCode::KeyS,
+            pan_left: KeyCode::KeyA,
+            pan_right: KeyCode::KeyD,
+            rotate_left: KeyCode::KeyQ,
+            rotate_right: KeyCode::KeyE,
+            drag_pan_button: MouseButton::Right,
+            rotate_drag_button: MouseButton::Middle,
+            zoom_to_cursor: true,
+            zoom_to_cursor_modifier: None,
+            enabled: true,
+        }
+    }
+}
+
+pub struct RtsCameraFallbackInputPlugin {
+    pub update_schedule: Interned<dyn ScheduleLabel>,
+}
+
+impl RtsCameraFallbackInputPlugin {
+    pub fn new(update_schedule: impl ScheduleLabel) -> Self {
+        Self {
+            update_schedule: update_schedule.intern(),
+        }
+    }
+}
+
+impl Default for RtsCameraFallbackInputPlugin {
+    fn default() -> Self {
+        Self::new(Update)
+    }
+}
+
+impl Plugin for RtsCameraFallbackInputPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<RtsCameraFallbackControls>()
+            .add_systems(
+                self.update_schedule,
+                apply_fallback_controls
+                    .in_set(RtsCameraSystems::ReadInput)
+                    .run_if(crate::runtime_is_active),
+            );
+    }
+}
 
 pub(crate) fn apply_fallback_controls(
     key_input: Option<Res<ButtonInput<KeyCode>>>,
@@ -172,3 +235,7 @@ fn select_input_target(
         .max_by_key(|(entity, camera, _, _)| (camera.order, entity.to_bits()))
         .map(|(entity, _, _, _)| entity)
 }
+
+#[cfg(test)]
+#[path = "fallback_tests.rs"]
+mod tests;

@@ -2,8 +2,8 @@ use saddle_camera_rts_camera_example_common as common;
 
 use bevy::prelude::*;
 use saddle_camera_rts_camera::{
-    RtsCamera, RtsCameraFallbackControls, RtsCameraFollow, RtsCameraPlugin, RtsCameraSettings,
-    RtsCameraSystems,
+    RtsCamera, RtsCameraFallbackControls, RtsCameraFallbackInputPlugin, RtsCameraFollow,
+    RtsCameraPlugin, RtsCameraSettings, RtsCameraSystems,
 };
 
 #[derive(Component)]
@@ -22,6 +22,7 @@ fn main() {
             ..default()
         }),
         RtsCameraPlugin::default(),
+        RtsCameraFallbackInputPlugin::default(),
     ));
     common::install_pane(&mut app);
     app.add_systems(Startup, setup);

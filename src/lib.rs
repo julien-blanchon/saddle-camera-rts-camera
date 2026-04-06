@@ -1,13 +1,14 @@
 mod components;
 mod config;
-mod input;
+#[cfg(feature = "fallback-input")]
+mod fallback;
 mod math;
 mod messages;
 mod systems;
 
 pub use components::{
-    RtsCamera, RtsCameraBookmark, RtsCameraBookmarks, RtsCameraDebug, RtsCameraFallbackControls,
-    RtsCameraFollow, RtsCameraGround, RtsCameraInput, RtsCameraInputTarget, RtsCameraRuntime,
+    RtsCamera, RtsCameraBookmark, RtsCameraBookmarks, RtsCameraDebug, RtsCameraFollow,
+    RtsCameraGround, RtsCameraInput, RtsCameraInputTarget, RtsCameraRuntime,
 };
 pub use config::{
     RtsCameraAnchorSettings, RtsCameraBounds, RtsCameraBoundsMode, RtsCameraCollisionSettings,
@@ -15,6 +16,8 @@ pub use config::{
     RtsCameraGroundSettings, RtsCameraMotionSettings, RtsCameraPitchSettings,
     RtsCameraRotationPivotMode, RtsCameraSettings, RtsCameraZoomAnchorMode,
 };
+#[cfg(feature = "fallback-input")]
+pub use fallback::{RtsCameraFallbackControls, RtsCameraFallbackInputPlugin};
 pub use math::{
     camera_pitch_for_distance, camera_transform_from_state, clamp_distance, pan_vector_from_yaw,
     resolve_ground_height_target, shortest_angle_delta, smooth_angle, smooth_scalar,
@@ -97,7 +100,6 @@ impl Plugin for RtsCameraPlugin {
             .register_type::<RtsCameraDebug>()
             .register_type::<RtsCameraDistanceSettings>()
             .register_type::<RtsCameraEdgePanSettings>()
-            .register_type::<RtsCameraFallbackControls>()
             .register_type::<RtsCameraFollow>()
             .register_type::<RtsCameraGround>()
             .register_type::<RtsCameraGroundSettings>()
@@ -126,12 +128,6 @@ impl Plugin for RtsCameraPlugin {
                     RtsCameraSystems::AdvanceRuntime,
                 )
                     .chain(),
-            )
-            .add_systems(
-                self.update_schedule,
-                input::apply_fallback_controls
-                    .in_set(RtsCameraSystems::ReadInput)
-                    .run_if(runtime_is_active),
             )
             .add_systems(
                 self.update_schedule,

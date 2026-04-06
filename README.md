@@ -20,7 +20,7 @@ Target-state camera model with smoothing, terrain probing, bounds, cursor-aware 
 
 ```toml
 [dependencies]
-saddle-camera-rts-camera = { git = "https://github.com/julien-blanchon/saddle-camera-rts-camera" }
+saddle-camera-rts-camera = { git = "https://github.com/julien-blanchon/saddle-camera-rts-camera", default-features = false }
 bevy = "0.18"
 ```
 
@@ -58,7 +58,23 @@ fn setup(
 }
 ```
 
-The runtime is driven through the `RtsCamera` target state plus the `RtsCameraInput` inbox. Consumers can mutate those public components directly or feed them from their own input layer.
+The core runtime is headless by default and is driven through the `RtsCamera` target state plus the `RtsCameraInput` inbox. Consumers can mutate those public components directly or feed them from their own input layer.
+
+For the raw Bevy fallback bridge used in the RTS-style examples, keep the default `fallback-input` feature enabled and add `RtsCameraFallbackInputPlugin` explicitly:
+
+```rust,no_run
+use bevy::prelude::*;
+use saddle_camera_rts_camera::{RtsCameraFallbackInputPlugin, RtsCameraPlugin};
+
+fn app_with_fallback_controls(app: &mut App) {
+    app.add_plugins((
+        RtsCameraPlugin::default(),
+        RtsCameraFallbackInputPlugin::default(),
+    ));
+}
+```
+
+Then insert `RtsCameraFallbackControls` on the camera entity you want to drive.
 
 That same input surface also handles one-shot fly-to commands plus bookmark save/recall, so minimaps, alerts, and editor tooling can reuse the same smoothing path as manual pan/zoom/rotate controls.
 
@@ -71,6 +87,7 @@ For always-on tools and examples, `RtsCameraPlugin::always_on(Update)` is the co
 | Type | Purpose |
 | --- | --- |
 | `RtsCameraPlugin` | Registers the runtime with injectable activate, deactivate, and update schedules |
+| `RtsCameraFallbackInputPlugin` | Optional raw Bevy keyboard/mouse bridge that writes into `RtsCameraInput` |
 | `RtsCameraSystems` | Public ordering hooks: `ReadInput`, `ResolveTarget`, `FollowGround`, `ApplyBounds`, `AdvanceRuntime`, `ResolveCollision`, `SyncTransform`, `Debug` |
 | `RtsCamera` | Main controller component containing desired focus, yaw, distance, and snap requests |
 | `RtsCameraRuntime` | Smoothed runtime state: focus, yaw, pitch, distance, ground height, last ground hit, last cursor anchor |
@@ -88,8 +105,11 @@ For always-on tools and examples, `RtsCameraPlugin::always_on(Update)` is the co
 ## Input Model
 
 - **Production path:** Use your own input adapter and write into `RtsCameraInput`.
-- **Included fallback:** `RtsCameraFallbackControls` is a raw Bevy-input bridge for minimal examples and lightweight tools.
+- **Headless/programmatic path:** Skip input adapters entirely and drive `RtsCamera` / `RtsCameraInput` from gameplay, tools, automation, or server-side systems.
+- **Optional fallback:** `RtsCameraFallbackControls` plus `RtsCameraFallbackInputPlugin` provide a raw Bevy-input bridge for examples, prototypes, and lightweight tools.
 - **`bevy_enhanced_input`:** The examples show a BEI integration that keeps the runtime crate itself Bevy-only.
+
+The `fallback-input` cargo feature is enabled by default for convenience, but the core plugin no longer installs any fallback reader on its own. Projects that want the smallest possible runtime surface can disable default features and depend on the headless core only.
 
 Only cameras tagged with `RtsCameraInputTarget` participate in shared pointer input. If several active cameras carry the marker, the highest `Camera.order` wins.
 
@@ -114,12 +134,13 @@ cargo run -p saddle-camera-rts-camera-example-basic
 
 | Example | Purpose |
 | --- | --- |
-| `basic` | Minimal fallback-controller setup on flat terrain |
+| `basic` | Explicit RTS raw-input mapping adapter on flat terrain |
 | `bookmarks` | Battlefield command posts with RTS-style bookmark recall and overwrite |
 | `terrain_follow` | Uneven ground with focus-height gizmos |
 | `cursor_zoom` | Focus zoom by default, Alt for cursor-preserving zoom |
 | `bounds` | Soft bounds behavior with visible clamp loop |
 | `follow_target` | Moving follow target with manual offset adjustment |
+| `headless` | No-input mode driven only by scripted `RtsCameraInput` fly-to commands |
 | `enhanced_input` | `bevy_enhanced_input` bridge writing into `RtsCameraInput` |
 
 Every example now ships with a live `saddle-pane` control surface so distance limits, cursor zoom policy, pan speeds, and debug gizmos can be tuned at runtime.

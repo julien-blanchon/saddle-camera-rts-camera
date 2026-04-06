@@ -215,6 +215,11 @@ The runtime clears `RtsCameraInput` at the end of each frame, so external writer
 
 This optional component powers the crate's explicit raw-input fallback bridge.
 
+Availability notes:
+
+- Requires the `fallback-input` cargo feature.
+- Also requires adding `RtsCameraFallbackInputPlugin` to the app; the core `RtsCameraPlugin` stays headless and does not read keyboard or mouse state on its own.
+
 | Field | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `pan_up` | `KeyCode` | `W` | Adds positive local pan Y while held |
@@ -230,6 +235,16 @@ This optional component powers the crate's explicit raw-input fallback bridge.
 | `enabled` | `bool` | `true` | Disables the fallback bridge without removing the component |
 
 Use this component for examples, prototypes, and lightweight tool scenes. For production gameplay input, prefer a dedicated adapter that writes directly into `RtsCameraInput`.
+
+## `RtsCameraFallbackInputPlugin`
+
+This optional plugin installs the raw Bevy keyboard/mouse bridge into the public `RtsCameraSystems::ReadInput` phase.
+
+| Field | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `update_schedule` | `Interned<dyn ScheduleLabel>` | `Update` | Schedule where the fallback input bridge writes `RtsCameraInput` |
+
+Use `RtsCameraFallbackInputPlugin::new(my_schedule)` when the core camera plugin runs on a custom schedule and the fallback bridge should execute in the same phase chain.
 
 ## `RtsCameraInputTarget`
 

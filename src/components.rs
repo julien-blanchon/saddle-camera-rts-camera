@@ -156,40 +156,6 @@ impl Default for RtsCameraFollow {
     }
 }
 
-#[derive(Component, Clone, Debug, Reflect)]
-#[reflect(Component)]
-pub struct RtsCameraFallbackControls {
-    pub pan_up: KeyCode,
-    pub pan_down: KeyCode,
-    pub pan_left: KeyCode,
-    pub pan_right: KeyCode,
-    pub rotate_left: KeyCode,
-    pub rotate_right: KeyCode,
-    pub drag_pan_button: MouseButton,
-    pub rotate_drag_button: MouseButton,
-    pub zoom_to_cursor: bool,
-    pub zoom_to_cursor_modifier: Option<KeyCode>,
-    pub enabled: bool,
-}
-
-impl Default for RtsCameraFallbackControls {
-    fn default() -> Self {
-        Self {
-            pan_up: KeyCode::KeyW,
-            pan_down: KeyCode::KeyS,
-            pan_left: KeyCode::KeyA,
-            pan_right: KeyCode::KeyD,
-            rotate_left: KeyCode::KeyQ,
-            rotate_right: KeyCode::KeyE,
-            drag_pan_button: MouseButton::Right,
-            rotate_drag_button: MouseButton::Middle,
-            zoom_to_cursor: true,
-            zoom_to_cursor_modifier: None,
-            enabled: true,
-        }
-    }
-}
-
 #[derive(Component, Clone, Debug, Reflect, Default)]
 #[reflect(Component)]
 pub struct RtsCameraInputTarget;
