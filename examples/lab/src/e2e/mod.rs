@@ -158,10 +158,17 @@ fn build_smoke() -> Scenario {
             "Assert the lab camera has valid runtime state and an active terrain-follow probe, then capture a baseline screenshot.",
         )
         .then(Action::WaitFrames(90))
+        .then(assertions::entity_exists::<RtsCamera>(
+            "camera entity exists",
+        ))
+        .then(assertions::entity_exists::<RtsCameraFollow>(
+            "follow component exists",
+        ))
         .then(assertions::component_satisfies::<RtsCameraRuntime>(
             "terrain follow has a height",
             |runtime| runtime.ground_height.is_some() && runtime.last_ground_hit.is_some(),
         ))
+        .then(inspect::log_world_summary("rts_camera_smoke world"))
         .then(assertions::log_summary("rts_camera_smoke summary"))
         .then(inspect::dump_component_json::<RtsCameraRuntime>("rts_camera_smoke_runtime"))
         .then(Action::Screenshot("rts_camera_smoke".into()))
