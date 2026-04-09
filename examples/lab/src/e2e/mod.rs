@@ -123,6 +123,28 @@ fn store_runtime_baseline(world: &mut World) {
     }
 }
 
+fn with_camera_settings(
+    world: &mut World,
+    update: impl FnOnce(&mut saddle_camera_rts_camera::RtsCameraSettings),
+) {
+    let Some(entity) = camera_entity(world) else {
+        return;
+    };
+    if let Some(mut settings) = world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity)
+    {
+        update(&mut settings);
+    }
+}
+
+fn with_follow(world: &mut World, update: impl FnOnce(&mut RtsCameraFollow)) {
+    let Some(entity) = camera_entity(world) else {
+        return;
+    };
+    if let Some(mut follow) = world.get_mut::<RtsCameraFollow>(entity) {
+        update(&mut follow);
+    }
+}
+
 fn set_cursor_position(world: &mut World, logical_position: Vec2) {
     let mut windows = world.query_filtered::<&mut Window, With<PrimaryWindow>>();
     let Ok(mut window) = windows.single_mut(world) else {
@@ -133,6 +155,115 @@ fn set_cursor_position(world: &mut World, logical_position: Vec2) {
         logical_position.x as f64 * scale,
         logical_position.y as f64 * scale,
     )));
+}
+
+fn set_edge_pan_enabled(world: &mut World, enabled: bool) {
+    with_camera_settings(world, |settings| {
+        settings.controls.edge_pan = enabled;
+    });
+}
+
+fn configure_pointer_controls(world: &mut World) {
+    with_camera_settings(world, |settings| {
+        settings.controls.pan = false;
+        settings.controls.edge_pan = true;
+        settings.controls.drag_pan = true;
+        settings.controls.rotation = true;
+        settings.controls.zoom = true;
+        settings.anchors.zoom_anchor = saddle_camera_rts_camera::RtsCameraZoomAnchorMode::Focus;
+    });
+}
+
+fn disable_manual_controls(world: &mut World) {
+    with_camera_settings(world, |settings| {
+        settings.controls.pan = false;
+        settings.controls.edge_pan = false;
+        settings.controls.drag_pan = false;
+        settings.controls.zoom = false;
+        settings.controls.rotation = false;
+        settings.controls.follow = false;
+    });
+}
+
+fn enable_follow(world: &mut World, enabled: bool, snap: bool) {
+    with_follow(world, |follow| {
+        follow.enabled = enabled;
+        follow.snap = snap;
+    });
+}
+
+fn set_pane_follow_enabled(world: &mut World, enabled: bool) {
+    if let Some(mut pane) =
+        world.get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
+    {
+        pane.follow_enabled = enabled;
+    }
+}
+
+fn set_bookmark_slot(world: &mut World, slot: u8) {
+    let Some(entity) = camera_entity(world) else {
+        return;
+    };
+    if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
+        input.set_bookmark_slot = Some(slot);
+    }
+}
+
+fn request_fly_to(
+    world: &mut World,
+    focus: Vec3,
+    yaw: f32,
+    distance: f32,
+    snap: bool,
+) {
+    let Some(entity) = camera_entity(world) else {
+        return;
+    };
+    if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
+        input.fly_to_focus = Some(focus);
+        input.fly_to_yaw = Some(yaw);
+        input.fly_to_distance = Some(distance);
+        input.fly_to_snap = snap;
+    }
+}
+
+fn request_recall_bookmark(world: &mut World, slot: u8, snap: bool) {
+    let Some(entity) = camera_entity(world) else {
+        return;
+    };
+    if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
+        input.recall_bookmark_slot = Some(slot);
+        input.recall_bookmark_snap = snap;
+    }
+}
+
+fn prime_manual_control_demo(world: &mut World, cursor: Vec2) {
+    set_edge_pan_enabled(world, false);
+    set_cursor_position(world, cursor);
+    store_runtime_baseline(world);
+}
+
+fn prime_pointer_control_demo(world: &mut World, cursor: Vec2) {
+    configure_pointer_controls(world);
+    set_cursor_position(world, cursor);
+    store_runtime_baseline(world);
+}
+
+fn prime_bookmark_demo(world: &mut World, cursor: Vec2) {
+    set_cursor_position(world, cursor);
+    store_runtime_baseline(world);
+    disable_manual_controls(world);
+    enable_follow(world, false, false);
+    set_pane_follow_enabled(world, false);
+    set_bookmark_slot(world, 0);
+}
+
+fn prime_headless_intents(world: &mut World, cursor: Vec2) {
+    set_cursor_position(world, cursor);
+    store_runtime_baseline(world);
+    disable_manual_controls(world);
+    enable_follow(world, false, false);
+    set_pane_follow_enabled(world, false);
 }
 
 fn build_smoke_launch() -> Scenario {
@@ -183,16 +314,7 @@ fn build_controls() -> Scenario {
         )
         .then(Action::WaitFrames(60))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-            if let Some(mut settings) =
-                world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity)
-            {
-                settings.controls.edge_pan = false;
-            }
-            set_cursor_position(world, Vec2::new(720.0, 450.0));
-            store_runtime_baseline(world);
+            prime_manual_control_demo(world, Vec2::new(720.0, 450.0));
         })))
         .then(Action::Screenshot("rts_camera_controls_before".into()))
         .then(Action::WaitFrames(1))
@@ -240,19 +362,7 @@ fn build_pointer_controls() -> Scenario {
         )
         .then(Action::WaitFrames(60))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-            if let Some(mut settings) = world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity) {
-                settings.controls.pan = false;
-                settings.controls.edge_pan = true;
-                settings.controls.drag_pan = true;
-                settings.controls.rotation = true;
-                settings.controls.zoom = true;
-                settings.anchors.zoom_anchor = saddle_camera_rts_camera::RtsCameraZoomAnchorMode::Focus;
-            }
-            set_cursor_position(world, Vec2::new(720.0, 450.0));
-            store_runtime_baseline(world);
+            prime_pointer_control_demo(world, Vec2::new(720.0, 450.0));
         })))
         .then(Action::Screenshot("rts_camera_pointer_controls_before".into()))
         .then(Action::Custom(Box::new(|world: &mut World| {
@@ -273,12 +383,7 @@ fn build_pointer_controls() -> Scenario {
         ))
         .then(Action::Screenshot("rts_camera_pointer_controls_edge_pan".into()))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-            if let Some(mut settings) = world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity) {
-                settings.controls.edge_pan = false;
-            }
+            set_edge_pan_enabled(world, false);
             set_cursor_position(world, Vec2::new(840.0, 430.0));
             store_runtime_baseline(world);
         })))
@@ -378,13 +483,7 @@ fn build_follow_target() -> Scenario {
         .then(Action::WaitFrames(60))
         .then(Action::Screenshot("rts_camera_follow_target_before".into()))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-            if let Some(mut follow) = world.get_mut::<RtsCameraFollow>(entity) {
-                follow.enabled = true;
-                follow.snap = true;
-            }
+            enable_follow(world, true, true);
         })))
         .then(Action::WaitFrames(45))
         .then(assertions::custom(
@@ -418,45 +517,17 @@ fn build_bookmarks() -> Scenario {
         )
         .then(Action::WaitFrames(60))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            set_cursor_position(world, Vec2::new(720.0, 450.0));
-            store_runtime_baseline(world);
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-            if let Some(mut settings) =
-                world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity)
-            {
-                settings.controls.edge_pan = false;
-            }
-            if let Some(mut follow) = world.get_mut::<RtsCameraFollow>(entity) {
-                follow.enabled = false;
-            }
-            if let Some(mut pane) = world
-                .get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
-            {
-                pane.follow_enabled = false;
-            }
-            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
-                input.set_bookmark_slot = Some(0);
-            }
+            prime_bookmark_demo(world, Vec2::new(720.0, 450.0));
         })))
         .then(Action::Screenshot("rts_camera_bookmarks_before".into()))
         .then(Action::WaitFrames(2))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
             if let Some(mut pane) = world
                 .get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
             {
                 pane.distance = 12.0;
             }
-            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
-                input.fly_to_focus = Some(Vec3::new(-12.0, 0.0, -8.0));
-                input.fly_to_yaw = Some(0.95);
-                input.fly_to_distance = Some(12.0);
-                input.fly_to_snap = false;
-            }
+            request_fly_to(world, Vec3::new(-12.0, 0.0, -8.0), 0.95, 12.0, false);
         })))
         .then(Action::WaitFrames(36))
         .then(assertions::custom(
@@ -476,9 +547,6 @@ fn build_bookmarks() -> Scenario {
         .then(Action::Screenshot("rts_camera_bookmarks_fly_to".into()))
         .then(Action::WaitFrames(1))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
             let baseline_distance = world
                 .get_resource::<RuntimeBaseline>()
                 .map(|baseline| baseline.distance);
@@ -489,10 +557,7 @@ fn build_bookmarks() -> Scenario {
                     pane.distance = distance;
                 }
             }
-            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
-                input.recall_bookmark_slot = Some(0);
-                input.recall_bookmark_snap = true;
-            }
+            request_recall_bookmark(world, 0, true);
         })))
         .then(Action::WaitFrames(6))
         .then(assertions::custom(
@@ -525,47 +590,12 @@ fn build_headless_intents() -> Scenario {
         )
         .then(Action::WaitFrames(60))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            set_cursor_position(world, Vec2::new(720.0, 450.0));
-            store_runtime_baseline(world);
-
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-
-            if let Some(mut settings) =
-                world.get_mut::<saddle_camera_rts_camera::RtsCameraSettings>(entity)
-            {
-                settings.controls.pan = false;
-                settings.controls.edge_pan = false;
-                settings.controls.drag_pan = false;
-                settings.controls.zoom = false;
-                settings.controls.rotation = false;
-                settings.controls.follow = false;
-            }
-
-            if let Some(mut follow) = world.get_mut::<RtsCameraFollow>(entity) {
-                follow.enabled = false;
-            }
-
-            if let Some(mut pane) = world
-                .get_resource_mut::<saddle_camera_rts_camera_example_common::ExampleRtsPane>()
-            {
-                pane.follow_enabled = false;
-            }
+            prime_headless_intents(world, Vec2::new(720.0, 450.0));
         })))
         .then(Action::Screenshot("rts_camera_headless_intents_before".into()))
         .then(Action::WaitFrames(2))
         .then(Action::Custom(Box::new(|world: &mut World| {
-            let Some(entity) = camera_entity(world) else {
-                return;
-            };
-
-            if let Some(mut input) = world.get_mut::<RtsCameraInput>(entity) {
-                input.fly_to_focus = Some(Vec3::new(12.0, 0.0, 12.0));
-                input.fly_to_yaw = Some(-0.75);
-                input.fly_to_distance = Some(14.0);
-                input.fly_to_snap = false;
-            }
+            request_fly_to(world, Vec3::new(12.0, 0.0, 12.0), -0.75, 14.0, false);
         })))
         .then(Action::WaitFrames(36))
         .then(assertions::custom(
